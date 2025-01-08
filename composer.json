@@ -83,9 +83,6 @@
 	},
 	"autoload": {
 		"files": [
-			"app/Helpers/Functions/php.php",
-			"app/Helpers/Functions/laravel.php",
-			"app/Helpers/Functions/install.php",
 			"app/Helpers/Functions/admin.php",
 			"app/Helpers/Functions/api.php",
 			"app/Helpers/Functions/core.php",

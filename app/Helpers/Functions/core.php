@@ -25,12 +25,12 @@ use App\Helpers\Arr;
 function isTranslatableModel($model): bool
 {
 	$isTranslatable = false;
-	
+
 	try {
 		if (!($model instanceof \Illuminate\Database\Eloquent\Model)) {
 			return false;
 		}
-		
+
 		$isTranslatableModel = (
 			property_exists($model, 'translatable')
 			&& (
@@ -39,14 +39,14 @@ function isTranslatableModel($model): bool
 				&& !empty($model->translatable)
 			)
 		);
-		
+
 		if ($isTranslatableModel) {
 			$isTranslatable = true;
 		}
 	} catch (\Throwable $e) {
 		return false;
 	}
-	
+
 	return $isTranslatable;
 }
 
@@ -81,7 +81,7 @@ function getViewContent(string $view, array $data = [], array $mergeData = []): 
 	} else {
 		$view = view($view, $data, $mergeData);
 	}
-	
+
 	return $view->render();
 }
 
@@ -98,14 +98,14 @@ function hidePartOfEmail(?string $value, int $escapedChars = 1): ?string
 	if ($atPos === false) {
 		return $value;
 	}
-	
+
 	$emailUsername = mb_substr($value, 0, $atPos);
 	$emailDomain = mb_substr($value, ($atPos + 1));
-	
+
 	if (!empty($emailUsername) && !empty($emailDomain)) {
 		$value = str($emailUsername)->mask('x', $escapedChars) . '@' . $emailDomain;
 	}
-	
+
 	return $value;
 }
 
@@ -123,7 +123,7 @@ function t(string $key = null, array $replace = [], string $file = 'global', str
 	if (is_null($locale)) {
 		$locale = config('app.locale');
 	}
-	
+
 	return trans($file . '.' . $key, $replace, $locale);
 }
 
@@ -136,7 +136,7 @@ function maxUploadSize()
 {
 	$maxUpload = (int)(ini_get('upload_max_filesize'));
 	$maxPost = (int)(ini_get('post_max_size'));
-	
+
 	return min($maxUpload, $maxPost);
 }
 
@@ -151,7 +151,7 @@ function maxApplyFileUploadSize()
 	if ($size >= 5) {
 		return 5;
 	}
-	
+
 	return $size;
 }
 
@@ -176,7 +176,7 @@ function escapeJsonString(?string $value): ?string
 	$escapers = ["\\", "/", "\"", "\n", "\r", "\t", "\x08", "\x0c"];
 	$replacements = ["\\\\", "\\/", "\\\"", "\\n", "\\r", "\\t", "\\f", "\\b"];
 	$value = str_replace($escapers, $replacements, trim($value));
-	
+
 	return trim($value);
 }
 
@@ -203,7 +203,7 @@ function getScheme(): string
 	} else {
 		$protocol = 'http';
 	}
-	
+
 	return $protocol . '://';
 }
 
@@ -221,11 +221,11 @@ function getHost(string $url = null)
 	} else {
 		$host = (trim(request()->server('HTTP_HOST')) != '') ? request()->server('HTTP_HOST') : ($_SERVER['HTTP_HOST'] ?? '');
 	}
-	
+
 	if ($host == '') {
 		$host = parse_url(url()->current(), PHP_URL_HOST);
 	}
-	
+
 	return $host;
 }
 
@@ -242,7 +242,7 @@ function getDomain(string $url = null): string
 	} else {
 		$host = getHost();
 	}
-	
+
 	$tmp = explode('.', $host);
 	if (count($tmp) > 2) {
 		$itemsToKeep = count($tmp) - 2;
@@ -257,7 +257,7 @@ function getDomain(string $url = null): string
 	} else {
 		$domain = @implode('.', $tmp);
 	}
-	
+
 	return $domain;
 }
 
@@ -273,7 +273,7 @@ function getDomain(string $url = null): string
 function getSubDomainName(): string
 {
 	$host = getHost();
-	
+
 	return (substr_count($host, '.') > 1) ? trim(current(explode('.', $host))) : '';
 }
 
@@ -284,7 +284,7 @@ function getCookieDomain(): string
 {
 	$host = getHost();
 	$array = mb_parse_url($host);
-	
+
 	return (is_array($array) && isset($array['path']) && !empty($array['path']))
 		? $array['path']
 		: $host;
@@ -344,9 +344,9 @@ function doesCountriesPageCanBeLinkedToTheHomepage(): bool
 function qsUrl(string $path = null, ?array $queryArray = [], $secure = null, bool $localized = true): string
 {
 	$url = getUrlWithoutQuery($path, $secure);
-	
+
 	// $queryArray = array_merge(getUrlQuery($path), $queryArray);
-	
+
 	if (config('plugins.domainmapping.installed')) {
 		if (isset($queryArray['country'])) {
 			unset($queryArray['country']);
@@ -359,11 +359,11 @@ function qsUrl(string $path = null, ?array $queryArray = [], $secure = null, boo
 			}
 		}, ARRAY_FILTER_USE_BOTH);
 	}
-	
+
 	if (!empty($queryArray)) {
 		$url = $url . '?' . Arr::query($queryArray);
 	}
-	
+
 	return $url;
 }
 
@@ -383,9 +383,9 @@ function getUrlWithoutQuery(?string $url, bool $secure = null): string
 		// Accepts URI|Path as URL
 		$url = url()->to($url, [], $secure);
 	}
-	
+
 	$url = preg_replace('/\?.*/ui', '', $url);
-	
+
 	return is_string($url) ? rtrim($url, '/') : '';
 }
 
@@ -403,13 +403,13 @@ function getUrlQuery(?string $url, $except = null): array
 		$url = request()->fullUrl();
 		if (empty($url)) return [];
 	}
-	
+
 	$queryArray = [];
-	
+
 	$parsedUrl = mb_parse_url($url);
 	if (isset($parsedUrl['query'])) {
 		mb_parse_str($parsedUrl['query'], $queryArray);
-		
+
 		if (!empty($except)) {
 			if (is_array($except)) {
 				foreach ($except as $item) {
@@ -425,7 +425,7 @@ function getUrlQuery(?string $url, $except = null): array
 			}
 		}
 	}
-	
+
 	return $queryArray;
 }
 
@@ -470,18 +470,18 @@ function dmUrl($country, ?string $path = '/', bool $forceCountry = false, bool $
 	if (empty($path)) {
 		$path = '/';
 	}
-	
+
 	$country = getValidCountry($country);
 	if (empty($country)) {
 		return url($path);
 	}
-	
+
 	// Clear the path
 	$path = ltrim($path, '/');
-	
+
 	// Get the country main language code
 	$langCode = getCountryMainLangCode($country);
-	
+
 	// Get the country main language path
 	$langPath = '';
 	if ($forceLocale) {
@@ -495,13 +495,13 @@ function dmUrl($country, ?string $path = '/', bool $forceCountry = false, bool $
 			}
 		}
 	}
-	
+
 	// Get the country domain data from the Domain Mapping plugin,
 	// And get a new URL related to domain, country language & given path
 	$domain = collect((array)config('domains'))->firstWhere('country_code', $country->get('code'));
 	if (isset($domain['url']) && !empty($domain['url'])) {
 		$path = preg_replace('#' . $country->get('code') . '/#ui', '', $path, 1);
-		
+
 		$url = rtrim($domain['url'], '/') . $langPath;
 		$url = $url . ((!empty($path)) ? '/' . $path : '');
 	} else {
@@ -511,7 +511,7 @@ function dmUrl($country, ?string $path = '/', bool $forceCountry = false, bool $
 			$url = $url . ('?country=' . $country->get('code'));
 		}
 	}
-	
+
 	return $url;
 }
 
@@ -535,17 +535,17 @@ function getValidCountry($country): ?\Illuminate\Support\Collection
 			return null;
 		}
 	}
-	
+
 	// Country collection is required to continue
 	if (!($country instanceof \Illuminate\Support\Collection)) {
 		return null;
 	}
-	
+
 	// Country collection code is required to continue
 	if (!$country->has('code')) {
 		return null;
 	}
-	
+
 	return $country;
 }
 
@@ -561,7 +561,7 @@ function getCountryMainLangCode($country): ?string
 	if (empty($country)) {
 		return null;
 	}
-	
+
 	// Get the country main language code
 	$langCode = null;
 	if ($country->has('lang') && $country->get('lang')->has('abbr')) {
@@ -579,7 +579,7 @@ function getCountryMainLangCode($country): ?string
 			}
 		}
 	}
-	
+
 	return $langCode;
 }
 
@@ -594,7 +594,7 @@ function applyDomainMappingConfig($countryCode)
 	if (empty($countryCode)) {
 		return;
 	}
-	
+
 	if (config('plugins.domainmapping.installed')) {
 		/*
 		 * When the session is shared, the domains name and logo columns are disabled.
@@ -636,7 +636,7 @@ function isAdminPanel(string $url = null): bool
 		try {
 			$urlPath = '/' . ltrim(parse_url($url, PHP_URL_PATH), '/');
 			$adminUri = '/' . ltrim(admin_uri(), '/');
-			
+
 			$isValid = (
 				str_starts_with($urlPath, $adminUri)
 				|| str_starts_with($urlPath, '/impersonate')
@@ -645,7 +645,7 @@ function isAdminPanel(string $url = null): bool
 			$isValid = false;
 		}
 	}
-	
+
 	return $isValid;
 }
 
@@ -660,7 +660,7 @@ function isLocalEnv(string $url = null): bool
 	if (empty($url)) {
 		$url = env('APP_URL');
 	}
-	
+
 	return (
 		str_contains($url, '127.0.0.1')
 		|| str_contains($url, '::1')
@@ -681,9 +681,9 @@ function isDevEnv(string $url = null): bool
 	if (empty($url)) {
 		$url = env('APP_URL');
 	}
-	
+
 	$domain = getDomain($url);
-	
+
 	return (
 		str_contains($domain, 'bedigit.local')
 		|| str_contains($domain, 'laraclassifier.local')
@@ -701,7 +701,7 @@ function isDemoEnv(string $url = null): bool
 	if (empty($url)) {
 		$url = env('APP_URL');
 	}
-	
+
 	return (
 		getDomain($url) == config('larapen.core.demo.domain')
 		|| in_array(getHost($url), (array)config('larapen.core.demo.hosts'))
@@ -717,11 +717,11 @@ function isDemoEnv(string $url = null): bool
 function isDemoDomain(string $url = null): bool
 {
 	$isDemoDomain = isDemoEnv($url);
-	
+
 	if (!$isDemoDomain) {
 		return false;
 	}
-	
+
 	if (auth()->check()) {
 		if (
 			auth()->user()->can(\App\Models\Permission::getStaffPermissions())
@@ -730,7 +730,7 @@ function isDemoDomain(string $url = null): bool
 			$isDemoDomain = false;
 		}
 	}
-	
+
 	return $isDemoDomain;
 }
 
@@ -747,9 +747,9 @@ function readableBytes($bytes, int $decimals = 2, string $system = 'binary')
 	if (!is_numeric($bytes)) {
 		return $bytes;
 	}
-	
+
 	$mod = ($system === 'binary') ? 1024 : 1000;
-	
+
 	$units = [
 		'binary' => [
 			'B',
@@ -774,13 +774,13 @@ function readableBytes($bytes, int $decimals = 2, string $system = 'binary')
 			'YB',
 		],
 	];
-	
+
 	$factor = floor((strlen($bytes) - 1) / 3);
 	$unit = $units[$system][$factor] ?? $units['binary'][$factor];
 	$bytes = $bytes / pow($mod, $factor);
-	
+
 	$bytes = \App\Helpers\Number::format($bytes, $decimals);
-	
+
 	return $bytes . $unit;
 }
 
@@ -792,18 +792,18 @@ function readableBytes($bytes, int $decimals = 2, string $system = 'binary')
 function getCountryCodeFromPath(): ?string
 {
 	$countryCode = null;
-	
+
 	// With these URLs, the language code and the country code can be available in the segments
 	// (If the "Multi-countries URLs Optimization" is enabled)
 	if (isFromUrlThatCanContainCountryCode()) {
 		$countryCode = request()->segment(1);
 	}
-	
+
 	// With these URLs, the language code and the country code are available in the segments
 	if (isFromUrlAlwaysContainingCountryCode()) {
 		$countryCode = request()->segment(2);
 	}
-	
+
 	return $countryCode;
 }
 
@@ -829,7 +829,7 @@ function isFromUrlThatCanContainCountryCode(): bool
 			return true;
 		}
 	}
-	
+
 	return false;
 }
 
@@ -850,7 +850,7 @@ function isFromUrlAlwaysContainingCountryCode(string $url = null): bool
 	} else {
 		$isValid = (str_ends_with($url, '.xml'));
 	}
-	
+
 	return $isValid;
 }
 
@@ -868,7 +868,7 @@ function isUploadedFile($value): bool
 	) {
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -886,7 +886,7 @@ function fileIsUploaded($value): bool
 function getUploadedFileMimeType($value): ?string
 {
 	$mimeType = null;
-	
+
 	if (!is_string($value)) {
 		if ($value instanceof \Illuminate\Http\UploadedFile) {
 			$mimeType = $value->getMimeType();
@@ -898,12 +898,12 @@ function getUploadedFileMimeType($value): ?string
 			} catch (\Throwable $e) {
 			}
 		}
-		
+
 		if (empty($mimeType)) {
 			$mimeType = 'image/jpeg';
 		}
 	}
-	
+
 	return strtolower($mimeType);
 }
 
@@ -916,7 +916,7 @@ function getUploadedFileMimeType($value): ?string
 function getUploadedFileExtension($value): ?string
 {
 	$extension = null;
-	
+
 	if (!is_string($value)) {
 		if ($value instanceof \Illuminate\Http\UploadedFile) {
 			$extension = $value->getClientOriginalExtension();
@@ -930,7 +930,7 @@ function getUploadedFileExtension($value): ?string
 			$extension = getExtension($value);
 		}
 	}
-	
+
 	return strtolower($extension);
 }
 
@@ -944,7 +944,7 @@ function getExtension(?string $filename)
 {
 	$tmp = explode('?', $filename);
 	$tmp = explode('.', current($tmp));
-	
+
 	return end($tmp);
 }
 
@@ -957,18 +957,17 @@ function getExtension(?string $filename)
 function transformDescription($string)
 {
 	if (config('settings.single.wysiwyg_editor') != 'none') {
-		
+
 		try {
 			$string = \Mews\Purifier\Facades\Purifier::clean($string);
 		} catch (\Throwable $e) {
 			// Nothing.
 		}
 		$string = createAutoLink($string);
-		
 	} else {
 		$string = nl2br(createAutoLink(strCleaner($string)));
 	}
-	
+
 	return $string;
 }
 
@@ -1001,7 +1000,7 @@ function strCleaner(?string $string): ?string
 	http://unicode.org/reports/tr36/#Deletion_of_Noncharacters
 	*/
 	$string = preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $string);
-	
+
 	return mb_ucfirst(trim($string));
 }
 
@@ -1018,7 +1017,7 @@ function strCleanerLite(?string $string)
 	$string = strip_tags($string);
 	$string = preg_replace('/[\'"]*(<|>)[\'"]*/us', '', $string);
 	$string = trim($string);
-	
+
 	/*
 	Remove non-breaking spaces
 	In HTML, the common non-breaking space, which is the same width as the ordinary space character, is encoded as &nbsp; or &#160;.
@@ -1026,7 +1025,7 @@ function strCleanerLite(?string $string)
 	https://en.wikipedia.org/wiki/Non-breaking_space
 	https://graphemica.com/00A0
 	*/
-	
+
 	return preg_replace('~\x{00a0}~siu', '', $string);
 }
 
@@ -1044,7 +1043,7 @@ function titleCleaner(?string $string)
 	$string = html_entity_decode($string);
 	$string = str_replace('º', '', $string);
 	$string = str_replace('ª', '', $string);
-	
+
 	/*
 	Match a single character not present in the list below
 	[^\p{L}\p{M}\p{Z}\p{N}\p{Sc}\%\'\"!?¿¡-]
@@ -1063,7 +1062,7 @@ function titleCleaner(?string $string)
 	m modifier: multi line. Causes ^ and $ to match the begin/end of each line (not only begin/end of string)
 	*/
 	$string = preg_replace('/[^\p{L}\p{M}\p{Z}\p{N}\p{Sc}\%\'\"\!\?¿¡\-]/u', ' ', $string);
-	
+
 	$string = preg_replace('/[\'"]*(<|>)[\'"]*/us', '', $string);
 	$string = str_replace(' ', ' ', $string); // do NOT remove, first is NOT blank space.
 	$string = str_replace('️', ' ', $string); // do NOT remove, there is a ghost.
@@ -1080,7 +1079,7 @@ function titleCleaner(?string $string)
 	$string = ltrim($string, '-');
 	$string = trim(preg_replace('/\s+/', ' ', $string)); // strip blank spaces, tabs
 	$string = trim($string);
-	
+
 	/*
 	Remove non-breaking spaces
 	In HTML, the common non-breaking space, which is the same width as the ordinary space character, is encoded as &nbsp; or &#160;.
@@ -1088,7 +1087,7 @@ function titleCleaner(?string $string)
 	https://en.wikipedia.org/wiki/Non-breaking_space
 	https://graphemica.com/00A0
 	*/
-	
+
 	return preg_replace('~\x{00a0}~siu', '', $string);
 }
 
@@ -1103,34 +1102,34 @@ function titleCleaner(?string $string)
 function tagCleaner($tagString, bool $forceArrayReturn = false)
 {
 	$limit = (int)config('settings.single.tags_limit', 15);
-	
+
 	if (!is_array($tagString) && !is_string($tagString)) {
 		return $forceArrayReturn ? [] : null;
 	}
-	
+
 	$arrayExpected = false;
-	
+
 	if (is_array($tagString)) {
 		$tagsArray = $tagString;
 		$arrayExpected = true;
 	} else {
 		$tagsArray = preg_split('|[:,;#_\|\n\t]+|ui', $tagString);
 	}
-	
+
 	$tags = [];
 	$i = 0;
 	foreach ($tagsArray as $tag) {
 		$tag = strCleanerLite($tag);
-		
+
 		// Remove all tags (simultaneously) staring and ending by a number
 		$tag = preg_replace('/\b\d+\b/ui', '', $tag);
-		
+
 		// Remove special characters
 		$tag = str_replace([':', ',', ';', '_', '\\', '/', '|', '+'], '', $tag);
-		
+
 		// Change the tag case (lowercase)
 		$tag = mb_strtolower(trim($tag));
-		
+
 		if ($tag != '') {
 			if (mb_strlen($tag) > 1) {
 				if ($i <= $limit) {
@@ -1141,11 +1140,11 @@ function tagCleaner($tagString, bool $forceArrayReturn = false)
 		}
 	}
 	$tags = array_unique($tags);
-	
+
 	if ($arrayExpected || $forceArrayReturn) {
 		return $tags;
 	}
-	
+
 	return !empty($tags) ? implode(',', $tags) : null;
 }
 
@@ -1177,7 +1176,7 @@ function onlyNumCleaner(?string $string): ?string
 	if ($tmpString == '') {
 		$string = null;
 	}
-	
+
 	return $string;
 }
 
@@ -1203,7 +1202,7 @@ function extractEmailAddress(?string $string): ?string
 			$email = (isset($tmp[0])) ? trim($tmp[0]) : '';
 		}
 	}
-	
+
 	return strtolower($email);
 }
 
@@ -1215,9 +1214,9 @@ function extractEmailAddress(?string $string): ?string
 function getSupportedLanguages(): array
 {
 	$supportedLanguages = [];
-	
+
 	$cacheExpiration = (int)config('settings.optimization.cache_expiration', 86400);
-	
+
 	// Get supported languages from database
 	try {
 		// Get all DB Languages
@@ -1227,10 +1226,10 @@ function getSupportedLanguages(): array
 			} catch (\Throwable $e) {
 				$activeLanguages = \App\Models\Language::where('active', 1)->get()->toArray();
 			}
-			
+
 			return $activeLanguages;
 		});
-		
+
 		if (count($activeLanguages)) {
 			foreach ($activeLanguages as $key => $lang) {
 				$lang['regional'] = $lang['locale'];
@@ -1244,7 +1243,7 @@ function getSupportedLanguages(): array
 		 * Please don't change anything here.
 		 */
 	}
-	
+
 	return $supportedLanguages;
 }
 
@@ -1260,7 +1259,7 @@ function isAvailableLang(?string $abbr): bool
 	$lang = cache()->remember('language.' . $abbr, $cacheExpiration, function () use ($abbr) {
 		return \App\Models\Language::where('abbr', $abbr)->first();
 	});
-	
+
 	return (!empty($lang));
 }
 
@@ -1273,17 +1272,17 @@ function getHostByUrl(?string $url)
 	if (empty($url)) {
 		return null;
 	}
-	
+
 	// in case scheme relative URI is passed, e.g., //www.google.com/
 	$url = trim($url, '/');
-	
+
 	// If scheme not included, prepend it
 	if (!preg_match('#^http(s)?://#', $url)) {
 		$url = 'http' . '://' . $url;
 	}
-	
+
 	$urlParts = parse_url($url);
-	
+
 	// remove www
 	return preg_replace('/^www\./', '', $urlParts['host']);
 }
@@ -1302,7 +1301,7 @@ function noFollow(?string $html, string $skip = null)
 			? $mach[1] . ' rel="nofollow">'
 			: $mach[0];
 	};
-	
+
 	return preg_replace_callback("#(<a[^>]+?)>#is", $callback, $html);
 }
 
@@ -1320,16 +1319,16 @@ function createAutoLink(?string $str, array $attributes = [])
 	foreach ($attributes as $attribute => $value) {
 		$attrs .= " {$attribute}=\"{$value}\"";
 	}
-	
+
 	$str = ' ' . $str;
 	$str = preg_replace('`([^"=\'>])((http|https|ftp)://[^\s<]+[^\s<\.)])`i', '$1<a rel="nofollow" href="$2"' . $attrs . ' target="_blank">$2</a>', $str);
 	$str = substr($str, 1);
-	
+
 	// Add rel="nofollow" to links
 	$httpHost = $_SERVER['HTTP_HOST'] ?? request()->server('HTTP_HOST');
 	$parse = parse_url('http' . '://' . $httpHost);
 	$str = noFollow($str, $parse['host']);
-	
+
 	// Find and attach target="_blank" to all href links from text
 	return openLinksInNewWindow($str);
 }
@@ -1344,24 +1343,24 @@ function openLinksInNewWindow(?string $content)
 {
 	// Find all links
 	preg_match_all('/<a ((?!target)[^>])+?>/ui', $content, $hrefMatches);
-	
+
 	// Loop only first array to modify links
 	if (is_array($hrefMatches) && isset($hrefMatches[0])) {
 		foreach ($hrefMatches[0] as $key => $value) {
 			// Take orig link
 			$origLink = $value;
-			
+
 			// Does it have target="_blank"
 			if (!preg_match('/target="_blank"/ui', $origLink)) {
 				// Add target = "_blank"
 				$newLink = preg_replace("/<a(.*?)>/ui", "<a$1 target=\"_blank\">", $origLink);
-				
+
 				// Replace old link in content with new link
 				$content = str_replace($origLink, $newLink, $content);
 			}
 		}
 	}
-	
+
 	return $content;
 }
 
@@ -1375,11 +1374,11 @@ function openOutsideLinksInNewWindow(?string $content)
 {
 	// Remove existing "target" attribute
 	$content = preg_replace('# target=[\'"]?[^\'"]*[\'"]?#ui', '', $content);
-	
+
 	// Add target=_blank to outside links
 	$pattern = '#(<a\\b[^<>]*href=[\'"]?http[^<>]+)>#ui';
 	$replace = '$1 target="_blank">';
-	
+
 	return preg_replace($pattern, $replace, $content);
 }
 
@@ -1394,15 +1393,15 @@ function checkTld(?string $url)
 	if (empty($url)) {
 		return null;
 	}
-	
+
 	$parsedUrl = parse_url($url);
 	if ($parsedUrl === false) {
 		return false;
 	}
-	
+
 	$tldArray = config('tlds');
 	$patten = implode('|', array_keys($tldArray));
-	
+
 	return preg_match('/\.(' . $patten . ')$/i', $parsedUrl['host']);
 }
 
@@ -1429,7 +1428,7 @@ function hex2rgb(?string $colour)
 	$r = hexdec($r);
 	$g = hexdec($g);
 	$b = hexdec($b);
-	
+
 	return ['r' => $r, 'g' => $g, 'b' => $b];
 }
 
@@ -1445,17 +1444,17 @@ function hex2rgb(?string $colour)
 function hex2rgba($color, bool $opacity = false): string
 {
 	$default = 'rgb(0,0,0)';
-	
+
 	//Return default if no color provided
 	if (empty($color)) {
 		return $default;
 	}
-	
+
 	//Sanitize $color if "#" is provided
 	if ($color[0] == '#') {
 		$color = substr($color, 1);
 	}
-	
+
 	//Check if color has 6 or 3 characters and get values
 	if (strlen($color) == 6) {
 		$hex = [$color[0] . $color[1], $color[2] . $color[3], $color[4] . $color[5]];
@@ -1464,10 +1463,10 @@ function hex2rgba($color, bool $opacity = false): string
 	} else {
 		return $default;
 	}
-	
+
 	//Convert hexadec to rgb
 	$rgb = array_map('hexdec', $hex);
-	
+
 	//Check if opacity is set(rgba or rgb)
 	if ($opacity) {
 		if (abs($opacity) > 1) {
@@ -1477,29 +1476,31 @@ function hex2rgba($color, bool $opacity = false): string
 	} else {
 		$output = 'rgb(' . implode(",", $rgb) . ')';
 	}
-	
+
 	// Return rgb(a) color string
 	return $output;
 }
 
-/**
- * ucfirst() function for multibyte character encodings
- *
- * @param string|null $string
- * @param string $encoding
- * @return string|null
- */
-function mb_ucfirst(?string $string, string $encoding = 'utf-8'): ?string
-{
-	if (empty($string)) {
-		return null;
+if (!function_exists('mb_ucfirst')) {
+	/**
+	 * ucfirst() function for multibyte character encodings
+	 *
+	 * @param string|null $string
+	 * @param string $encoding
+	 * @return string|null
+	 */
+	function mb_ucfirst(?string $string, string $encoding = 'utf-8'): ?string
+	{
+		if (empty($string)) {
+			return null;
+		}
+
+		$strLen = mb_strlen($string, $encoding);
+		$firstChar = mb_substr($string, 0, 1, $encoding);
+		$then = mb_substr($string, 1, $strLen - 1, $encoding);
+
+		return mb_strtoupper($firstChar, $encoding) . $then;
 	}
-	
-	$strLen = mb_strlen($string, $encoding);
-	$firstChar = mb_substr($string, 0, 1, $encoding);
-	$then = mb_substr($string, 1, $strLen - 1, $encoding);
-	
-	return mb_strtoupper($firstChar, $encoding) . $then;
 }
 
 /**
@@ -1514,9 +1515,9 @@ function mb_ucwords(?string $string, string $encoding = 'utf-8'): ?string
 	if (empty($string)) {
 		return null;
 	}
-	
+
 	$tab = [];
-	
+
 	// Split the phrase by any number of space characters, which include " ", \r, \t, \n and \f
 	$words = preg_split('/\s+/ui', $string);
 	if (!empty($words)) {
@@ -1524,7 +1525,7 @@ function mb_ucwords(?string $string, string $encoding = 'utf-8'): ?string
 			$tab[$key] = mb_ucfirst($word, $encoding);
 		}
 	}
-	
+
 	return (!empty($tab)) ? implode(' ', $tab) : null;
 }
 
@@ -1537,25 +1538,27 @@ function mb_ucwords(?string $string, string $encoding = 'utf-8'): ?string
  */
 function mb_parse_url(?string $url, int $component = -1)
 {
-	$callback = function ($matches) { return urlencode($matches[0]); };
+	$callback = function ($matches) {
+		return urlencode($matches[0]);
+	};
 	$encodedUrl = preg_replace_callback('%[^:/@?&=#]+%usD', $callback, $url);
-	
+
 	if (empty($encodedUrl)) {
 		return null;
 	}
-	
+
 	$parts = parse_url($encodedUrl, $component);
-	
+
 	if ($parts === false) {
 		throw new \InvalidArgumentException('Malformed URL: ' . $url);
 	}
-	
+
 	if (is_array($parts) && count($parts) > 0) {
 		foreach ($parts as $name => $value) {
 			$parts[$name] = urldecode($value);
 		}
 	}
-	
+
 	return $parts;
 }
 
@@ -1570,14 +1573,14 @@ function slugify(?string $string, string $separator = '-')
 {
 	// Remove accents using WordPress API method.
 	$string = remove_accents($string);
-	
+
 	// Slug
 	$string = mb_strtolower($string);
 	$string = @trim($string);
 	$replace = "/(\\s|\\" . $separator . ")+/mu";
 	$subst = $separator;
 	$string = preg_replace($replace, $subst, $string);
-	
+
 	// Remove unwanted punctuation, convert some to '-'
 	$puncTable = [
 		// remove
@@ -1614,19 +1617,19 @@ function slugify(?string $string, string $separator = '-')
 		'\\' => '-',
 	];
 	$string = str_replace(array_keys($puncTable), array_values($puncTable), $string);
-	
+
 	// Clean up multiple '-' characters
 	$string = preg_replace('/-{2,}/', '-', $string);
-	
+
 	// Remove trailing '-' character if string not just '-'
 	if ($string != '-') {
 		$string = rtrim($string, '-');
 	}
-	
+
 	if ($separator != '-') {
 		$string = str_replace('-', $separator, $string);
 	}
-	
+
 	return $string;
 }
 
@@ -1636,7 +1639,7 @@ function slugify(?string $string, string $separator = '-')
 function detectLocale()
 {
 	$lang = detectLanguage();
-	
+
 	return (!$lang->isEmpty()) ? $lang->get('locale') : 'en_US';
 }
 
@@ -1646,7 +1649,7 @@ function detectLocale()
 function detectLanguage(): \Illuminate\Support\Collection
 {
 	$obj = new App\Helpers\Localization\Language();
-	
+
 	return $obj->find();
 }
 
@@ -1670,9 +1673,9 @@ function getCountriesFromArray(): ?array
 {
 	$countries = new App\Helpers\Localization\Helpers\Country();
 	$countries = $countries->all();
-	
+
 	if (empty($countries)) return null;
-	
+
 	$arr = [];
 	foreach ($countries as $code => $value) {
 		if (!file_exists(storage_path('database/geonames/countries/' . strtolower($code) . '.sql'))) {
@@ -1681,7 +1684,7 @@ function getCountriesFromArray(): ?array
 		$row = ['value' => $code, 'text' => $value];
 		$arr[] = $row;
 	}
-	
+
 	return $arr;
 }
 
@@ -1694,24 +1697,24 @@ function getCountriesFromArray(): ?array
 function getCountries(bool $includeNonActive = false): array
 {
 	$arr = [];
-	
+
 	// Get installed countries list
 	$countries = \App\Helpers\Localization\Country::getCountries($includeNonActive);
-	
+
 	if ($countries->count() > 0) {
 		foreach ($countries as $code => $country) {
 			// The country entry must be a Laravel Collection object
 			if (!$country instanceof \Illuminate\Support\Collection) {
 				$country = collect($country);
 			}
-			
+
 			// Get the country data
 			$code = ($country->has('code')) ? $country->get('code') : $code;
 			$name = ($country->has('name')) ? $country->get('name') : '';
 			$arr[$code] = $name;
 		}
 	}
-	
+
 	return $arr;
 }
 
@@ -1726,7 +1729,7 @@ function getPlural($number)
 	if (!is_numeric($number)) {
 		$number = (int)$number;
 	}
-	
+
 	if (config('lang.russian_pluralization')) {
 		// Russian pluralization rules
 		$typeOfPlural = (($number % 10 == 1) && ($number % 100 != 11))
@@ -1742,7 +1745,7 @@ function getPlural($number)
 		// No rule for other languages
 		$typeOfPlural = $number;
 	}
-	
+
 	return $typeOfPlural;
 }
 
@@ -1759,19 +1762,19 @@ function getUrlPageByType(?string $type, string $locale = null): string
 	if (is_null($locale)) {
 		$locale = config('app.locale');
 	}
-	
+
 	$cacheExpiration = (int)config('settings.optimization.cache_expiration', 86400);
 	$cacheId = 'page.' . $locale . '.type.' . $type;
 	$page = cache()->remember($cacheId, $cacheExpiration, function () use ($type, $locale) {
 		$page = \App\Models\Page::type($type)->first();
-		
+
 		if (!empty($page)) {
 			$page->setLocale($locale);
 		}
-		
+
 		return $page;
 	});
-	
+
 	$linkTarget = '';
 	$linkRel = '';
 	if (!empty($page)) {
@@ -1787,7 +1790,7 @@ function getUrlPageByType(?string $type, string $locale = null): string
 	} else {
 		$url = '#';
 	}
-	
+
 	// Get attributes
 	return 'href="' . $url . '"' . $linkRel . $linkTarget;
 }
@@ -1804,16 +1807,18 @@ function getUploadFileTypes(?string $uploadType = 'file', bool $jsFormat = false
 	} else {
 		$types = config('settings.upload.file_types', 'pdf,doc,docx,word,rtf,rtx,ppt,pptx,odt,odp,wps,jpeg,jpg,bmp,png');
 	}
-	
+
 	$separators = ['|', '-', ';', '.', '/', '_', ' '];
 	$types = str_replace($separators, ',', $types);
-	
+
 	if ($jsFormat) {
 		$types = explode(',', $types);
-		$types = array_filter($types, function ($value) { return $value !== ''; });
+		$types = array_filter($types, function ($value) {
+			return $value !== '';
+		});
 		$types = json_encode($types);
 	}
-	
+
 	return $types;
 }
 
@@ -1824,7 +1829,7 @@ function getUploadFileTypes(?string $uploadType = 'file', bool $jsFormat = false
 function showValidFileTypes(?string $uploadType = 'file')
 {
 	$formats = getUploadFileTypes($uploadType);
-	
+
 	return str_replace(',', ', ', $formats);
 }
 
@@ -1840,11 +1845,11 @@ function jsonToArray($string)
 	if (is_array($string)) {
 		return $string;
 	}
-	
+
 	if (is_object($string)) {
 		return Arr::fromObject($string);
 	}
-	
+
 	if (isJson($string)) {
 		$array = json_decode($string, true);
 		// If the JSON was encoded in JSON by mistake
@@ -1854,7 +1859,7 @@ function jsonToArray($string)
 	} else {
 		$array = [];
 	}
-	
+
 	return $array;
 }
 
@@ -1869,7 +1874,7 @@ function settingArrayElements($value): ?array
 	if (!is_array($value)) {
 		return null;
 	}
-	
+
 	if (!empty($value)) {
 		$array = [];
 		foreach ($value as $subColumn => $subValue) {
@@ -1877,7 +1882,7 @@ function settingArrayElements($value): ?array
 		}
 		$value = $array;
 	}
-	
+
 	return $value;
 }
 
@@ -1901,14 +1906,14 @@ function isJson($string): bool
 function isValidDate(?string $value): bool
 {
 	$isValid = false;
-	
+
 	if (strtotime($value) !== false) {
 		$value = date('Y-m-d H:i', strtotime($value));
 	}
-	
+
 	$value = str_replace('/', '-', $value);
 	$value = str_replace('.', '-', $value);
-	
+
 	if (\DateTime::createFromFormat('Y-m-d H:i:s', $value) !== false) {
 		$isValid = true;
 	} else {
@@ -1920,7 +1925,7 @@ function isValidDate(?string $value): bool
 			}
 		}
 	}
-	
+
 	return $isValid;
 }
 
@@ -1934,7 +1939,7 @@ function phpExecFuncEnabled(): bool
 	try {
 		// make a small test
 		exec("ls");
-		
+
 		return function_exists('exec') && !in_array('exec', array_map('trim', explode(',', ini_get('disable_functions'))));
 	} catch (\Throwable $e) {
 		return false;
@@ -1951,7 +1956,7 @@ function phpFuncEnabled(string $name): bool
 {
 	try {
 		$disabled = array_map('trim', explode(',', ini_get('disable_functions')));
-		
+
 		return !in_array($name, $disabled);
 	} catch (\Throwable $e) {
 		return false;
@@ -1969,7 +1974,7 @@ function artisanConfigCache()
 	// Since config:cache runs in the background
 	// to determine if it is done, we just check if the files modified time have been changed
 	$files = ['bootstrap/cache/config.php', 'bootstrap/cache/services.php'];
-	
+
 	// get the last modified time of the files
 	$last = 0;
 	foreach ($files as $file) {
@@ -1980,14 +1985,14 @@ function artisanConfigCache()
 			}
 		}
 	}
-	
+
 	// Prepare to run (5 seconds for $timeout)
 	$timeout = 5;
 	$start = time();
-	
+
 	// Actually call the Artisan command
 	$exitCode = \Artisan::call('config:cache');
-	
+
 	// Check if Artisan call is done
 	while (true) {
 		// Just finish if timeout
@@ -1995,7 +2000,7 @@ function artisanConfigCache()
 			echo "Timeout\n";
 			break;
 		}
-		
+
 		// If any file is still missing, keep waiting
 		// If any file is not updated, keep waiting
 		// @todo: services.php file keeps unchanged after artisan config:cache
@@ -2011,12 +2016,12 @@ function artisanConfigCache()
 				}
 			}
 		}
-		
+
 		// Just wait another extra 3 seconds before finishing
 		sleep(3);
 		break;
 	}
-	
+
 	return $exitCode;
 }
 
@@ -2041,7 +2046,7 @@ function exifExtIsEnabled(): bool
 		if (extension_loaded('exif') && function_exists('exif_read_data')) {
 			return true;
 		}
-		
+
 		return false;
 	} catch (\Throwable $e) {
 		return false;
@@ -2068,7 +2073,7 @@ function fileUrl(?string $filePath)
 {
 	// Storage Disk Init.
 	$disk = \App\Helpers\Files\Storage\StorageDisk::getDisk();
-	
+
 	try {
 		return $disk->url($filePath);
 	} catch (\Throwable $e) {
@@ -2086,16 +2091,16 @@ function fileUrl(?string $filePath)
 function privateFileUrl(?string $filePath, ?string $diskName = 'private')
 {
 	$queryString = 'path=' . $filePath;
-	
+
 	// For JC
 	if (str_starts_with($filePath, 'resumes/')) {
 		$diskName = 'private';
 	}
-	
+
 	if (!empty($diskName)) {
 		$queryString = 'disk=' . $diskName . '&' . $queryString;
 	}
-	
+
 	return url('common/file?' . $queryString);
 }
 
@@ -2110,7 +2115,7 @@ function buildAttributes(?array $attributes): string
 	if (empty($attributes)) {
 		return '';
 	}
-	
+
 	$attributePairs = [];
 	foreach ($attributes as $key => $val) {
 		if (is_int($key)) {
@@ -2120,13 +2125,13 @@ function buildAttributes(?array $attributes): string
 			$attributePairs[] = "{$key}=\"{$val}\"";
 		}
 	}
-	
+
 	$out = trim(implode(' ', $attributePairs));
-	
+
 	if (!empty($out)) {
 		$out = ' ' . $out;
 	}
-	
+
 	return $out;
 }
 
@@ -2140,11 +2145,11 @@ function imgTag(?string $filePath, ?string $preConfigSize = 'big', ?array $attr 
 {
 	$src = imgUrl($filePath, $preConfigSize);
 	$attr = buildAttributes($attr);
-	
+
 	$out = '';
 	if (config('settings.optimization.webp_format')) {
 		$srcWebp = imgUrl($filePath, $preConfigSize, true);
-		
+
 		if (!str_ends_with($srcWebp, '.webp')) {
 			$out .= '<img src="' . $src . '"' . $attr . '>';
 		} else {
@@ -2156,7 +2161,7 @@ function imgTag(?string $filePath, ?string $preConfigSize = 'big', ?array $attr 
 	} else {
 		$out .= '<img src="' . $src . '"' . $attr . '>';
 	}
-	
+
 	return $out;
 }
 
@@ -2170,7 +2175,7 @@ function imgUrl(?string $filePath, ?string $preConfigSize = 'big', bool $webpFor
 {
 	// Storage Disk Init.
 	$disk = \App\Helpers\Files\Storage\StorageDisk::getDisk();
-	
+
 	// Check if this is the default picture
 	if (
 		str_contains($filePath, config('larapen.core.logo'))
@@ -2182,7 +2187,7 @@ function imgUrl(?string $filePath, ?string $preConfigSize = 'big', bool $webpFor
 	) {
 		return $disk->url($filePath) . getPictureVersion();
 	}
-	
+
 	// Get pre-resized picture URL
 	$picTypesAdmin = ['logo', 'cat', 'small', 'medium', 'big'];
 	$picTypesOther = array_keys((array)config('larapen.core.picture.otherTypes'));
@@ -2194,7 +2199,7 @@ function imgUrl(?string $filePath, ?string $preConfigSize = 'big', bool $webpFor
 			return url('common/file?path=' . $filePath) . getPictureVersion(true);
 		}
 	}
-	
+
 	// Check, Create thumbnail and Get its URL
 	if ($webpFormat) {
 		return resizeWebp($disk, $filePath, $preConfigSize);
@@ -2214,29 +2219,29 @@ function resize($disk, ?string $filePath, ?string $preConfigSize = 'big', bool $
 {
 	// Image Quality
 	$imageQuality = config('settings.upload.image_quality', 90);
-	
+
 	// Get Dimensions
 	$defaultWidth = config('larapen.core.picture.otherTypes.' . $preConfigSize . '.width', 816);
 	$defaultHeight = config('larapen.core.picture.otherTypes.' . $preConfigSize . '.height', 460);
 	$width = (int)config('settings.upload.img_resize_' . $preConfigSize . '_width', $defaultWidth);
 	$height = (int)config('settings.upload.img_resize_' . $preConfigSize . '_height', $defaultHeight);
-	
+
 	$filename = (!str_ends_with($filePath, DIRECTORY_SEPARATOR)) ? basename($filePath) : '';
 	$fileDir = str_replace($filename, '', $filePath);
 	$fileDir = rtrim($fileDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-	
+
 	// WebP
 	$filenameWithoutExtension = substr($filename, 0, strrpos($filename, '.'));
 	$webpFilename = $filenameWithoutExtension . '.webp';
 	if ($webpFormat) {
 		$filename = $webpFilename;
 	}
-	
+
 	// Thumb file name
 	$sizeLabel = $width . 'x' . $height;
 	$thumbFilename = 'thumb-' . $sizeLabel . '-' . $filename;
 	$thumbFilePath = $fileDir . $thumbFilename;
-	
+
 	// Check if thumb image exists
 	if (!$disk->exists($thumbFilePath)) {
 		// Create thumb image if it not exists
@@ -2247,16 +2252,16 @@ function resize($disk, ?string $filePath, ?string $preConfigSize = 'big', bool $
 			} else {
 				$extension = (is_png($disk->get($filePath))) ? 'png' : 'jpg';
 			}
-			
+
 			// Init. Intervention
 			$image = \Intervention\Image\Facades\Image::make($disk->get($filePath));
-			
+
 			// Get the image original dimensions
 			$imgWidth = $image->width();
 			$imgHeight = $image->height();
-			
+
 			// Manage Image By Type
-			
+
 			// Get Other Types Parameters
 			if (in_array($preConfigSize, array_keys((array)config('larapen.core.picture.otherTypes')))) {
 				// Get image manipulation settings
@@ -2264,7 +2269,7 @@ function resize($disk, ?string $filePath, ?string $preConfigSize = 'big', bool $
 				$height = (int)config('larapen.core.picture.otherTypes.' . $preConfigSize . '.height', 900);
 				$ratio = config('larapen.core.picture.otherTypes.' . $preConfigSize . '.ratio', '1');
 				$upSize = config('larapen.core.picture.otherTypes.' . $preConfigSize . '.upsize', '0');
-				
+
 				// If the original dimensions are higher than the resize dimensions
 				// OR the 'upsize' option is enable, then resize the image
 				if ($imgWidth > $width || $imgHeight > $height) {
@@ -2282,7 +2287,7 @@ function resize($disk, ?string $filePath, ?string $preConfigSize = 'big', bool $
 				// Get image manipulation settings
 				$ratio = config('settings.upload.img_resize_' . $preConfigSize . '_ratio', '1');
 				$upSize = config('settings.upload.img_resize_' . $preConfigSize . '_upsize', '0');
-				
+
 				// If the original dimensions are higher than the resize dimensions
 				// OR the 'upsize' option is enable, then resize the image
 				if ($imgWidth > $width || $imgHeight > $height || $upSize == '1') {
@@ -2304,7 +2309,7 @@ function resize($disk, ?string $filePath, ?string $preConfigSize = 'big', bool $
 				$position = config('settings.upload.img_resize_' . $preConfigSize . '_position', 'center');
 				$relative = config('settings.upload.img_resize_' . $preConfigSize . '_relative', false);
 				$bgColor = config('settings.upload.img_resize_' . $preConfigSize . '_bg_color', 'ffffff');
-				
+
 				if ($resizeType == '0') {
 					if ($imgWidth > $width || $imgHeight > $height || $upSize == '1') {
 						// Resize
@@ -2357,23 +2362,22 @@ function resize($disk, ?string $filePath, ?string $preConfigSize = 'big', bool $
 					});
 				}
 			}
-			
+
 			// Encode the Image!
 			$image = $image->encode($extension, $imageQuality);
-			
 		} catch (\Throwable $e) {
 			$storageDisk = \Illuminate\Support\Facades\Storage::disk(config('filesystems.default'));
-			
+
 			return $storageDisk->url($filePath) . getPictureVersion();
 		}
-		
+
 		// Store the image on disk.
 		$disk->put($thumbFilePath, $image->stream()->__toString());
-		
+
 		// Now delete temporary intervention image as we have moved it to Storage folder with Laravel filesystem.
 		$image->destroy();
 	}
-	
+
 	// Get the image URL
 	try {
 		return $disk->url($thumbFilePath) . getPictureVersion();
@@ -2406,7 +2410,7 @@ function getPictureVersion(bool $queryStringExists = false): string
 		$pictureVersion .= ($queryStringExists) ? '&' : '?';
 		$pictureVersion .= 'v=' . config('larapen.core.picture.version');
 	}
-	
+
 	return $pictureVersion;
 }
 
@@ -2419,7 +2423,7 @@ function vTime(): string
 	if (app()->environment(['staging', 'production'])) {
 		$timeStamp = '';
 	}
-	
+
 	return $timeStamp;
 }
 
@@ -2434,12 +2438,12 @@ function is_png(?string $bufferImg, bool $recursive = true): bool
 {
 	$f = finfo_open();
 	$result = finfo_buffer($f, $bufferImg, FILEINFO_MIME_TYPE);
-	
+
 	if (!str_contains($result, 'image') && $recursive) {
 		// Plain Text
 		return str_contains($bufferImg, 'image/png');
 	}
-	
+
 	return $result == 'image/png';
 }
 
@@ -2454,12 +2458,12 @@ function getAuthFields(bool $asChannel = false): array
 	$authFields = [
 		'email' => $asChannel ? trans('settings.mail') : trans('global.email_address'),
 	];
-	
+
 	$phoneIsEnabledAsAuthField = (config('settings.sms.enable_phone_as_auth_field') == '1');
 	if ($phoneIsEnabledAsAuthField) {
 		$authFields['phone'] = $asChannel ? trans('settings.sms') : trans('global.phone_number');
 	}
-	
+
 	return $authFields;
 }
 
@@ -2473,17 +2477,17 @@ function getAuthField($entity = null): string
 {
 	$authFields = array_keys(getAuthFields());
 	$defaultAuthField = config('settings.sms.default_auth_field', 'email');
-	
+
 	// From default value
 	$authField = $defaultAuthField;
-	
+
 	// From authenticated user's data
 	$guard = isFromApi() ? 'sanctum' : null;
 	if (auth($guard)->check()) {
 		$savedValue = auth($guard)->user()->auth_field ?? $authField;
 		$authField = (!empty($savedValue)) ? $savedValue : $authField;
 	}
-	
+
 	// From a database table
 	// '$entity' can be any table object that has 'auth_field' column
 	if (!empty($entity)) {
@@ -2492,16 +2496,16 @@ function getAuthField($entity = null): string
 			: ($entity->auth_field ?? $defaultAuthField);
 		$authField = (!empty($savedValue)) ? $savedValue : $defaultAuthField;
 	}
-	
+
 	// From form
 	if (request()->filled('auth_field')) {
 		$authField = request()->input('auth_field');
 	}
-	
+
 	$authField = (in_array($authField, $authFields)) ? $authField : $defaultAuthField;
-	
+
 	$phoneIsEnabledAsAuthField = (config('settings.sms.enable_phone_as_auth_field') == '1');
-	
+
 	return ($phoneIsEnabledAsAuthField) ? $authField : 'email';
 }
 
@@ -2519,7 +2523,7 @@ function getAuthFieldFromItsValue(?string $value = null): string
 	} else if (preg_match('/^((\+|00)\d{1,3})?[\s\d]+$/', $value)) {
 		$field = 'phone';
 	}
-	
+
 	return $field;
 }
 
@@ -2531,7 +2535,7 @@ function getAuthFieldFromItsValue(?string $value = null): string
 function getAuthFieldOnTokenPage(): ?string
 {
 	$authFields = array_keys(getAuthFields());
-	
+
 	// Get the right auth field
 	$authField = null;
 	if (request()->segment(2) == 'verify') {
@@ -2542,7 +2546,7 @@ function getAuthFieldOnTokenPage(): ?string
 			$authField = request()->segment(3);
 		}
 	}
-	
+
 	return $authField;
 }
 
@@ -2557,7 +2561,7 @@ function getAuthFieldOnTokenPage(): ?string
 function phoneNormalized(?string $phone): string
 {
 	$phone = ($phone !== null) ? $phone : '';
-	
+
 	return '' . preg_replace('/\D+/', '', $phone);
 }
 
@@ -2574,9 +2578,9 @@ function isValidPhoneNumber(?string $phone, ?string $countryCode = null, ?string
 	if (empty($phone) || empty($countryCode)) {
 		return false;
 	}
-	
+
 	$phone = phoneNormalized($phone);
-	
+
 	try {
 		$validator = phone($phone, $countryCode);
 		$isValid = $validator->isOfCountry($countryCode);
@@ -2586,7 +2590,7 @@ function isValidPhoneNumber(?string $phone, ?string $countryCode = null, ?string
 	} catch (\Throwable $e) {
 		$isValid = false;
 	}
-	
+
 	return $isValid;
 }
 
@@ -2602,13 +2606,13 @@ function isValidPhoneNumber(?string $phone, ?string $countryCode = null, ?string
 function phoneNational(?string $phone, ?string $countryCode = null): ?string
 {
 	$phone = phoneNormalized($phone);
-	
+
 	try {
 		$phone = phone($phone, $countryCode)->formatNational();
 	} catch (\Throwable $e) {
 		// Keep the default value
 	}
-	
+
 	return $phone;
 }
 
@@ -2627,13 +2631,13 @@ function phoneNational(?string $phone, ?string $countryCode = null): ?string
 function phoneE164(?string $phone, ?string $countryCode = null): ?string
 {
 	$phone = phoneNormalized($phone);
-	
+
 	try {
 		$phone = phone($phone, $countryCode)->formatE164();
 	} catch (\Throwable $e) {
 		// Keep the default value
 	}
-	
+
 	return $phone;
 }
 
@@ -2650,13 +2654,13 @@ function phoneE164(?string $phone, ?string $countryCode = null): ?string
 function phoneIntl(?string $phone, ?string $countryCode = null): ?string
 {
 	$phone = phoneNormalized($phone);
-	
+
 	try {
 		$phone = phone($phone, $countryCode)->formatInternational();
 	} catch (\Throwable $e) {
 		// Keep the default value
 	}
-	
+
 	return $phone;
 }
 
@@ -2673,20 +2677,20 @@ function setPhoneSign(?string $phone, ?string $provider = null): ?string
 			$phone = '' . str_replace('+', '', $phone);
 		}
 	}
-	
+
 	if ($provider == 'twilio') {
 		// Twilio requires the sign '+'
 		if (!str_starts_with($phone, '+')) {
 			$phone = '+' . $phone;
 		}
 	}
-	
+
 	if (!in_array($provider, ['vonage', 'twilio'])) {
 		if (!str_starts_with($phone, '+')) {
 			$phone = '+' . $phone;
 		}
 	}
-	
+
 	return ($phone == '+') ? '' : $phone;
 }
 
@@ -2698,7 +2702,7 @@ function getPhoneCountry($defaultCountryCode = null)
 {
 	$countryCode = $defaultCountryCode ?? (isFromApi() ? config('country.code') : session('countryCode'));
 	$countryCode = request()->input('country_code', $countryCode);
-	
+
 	return request()->input('phone_country', $countryCode);
 }
 
@@ -2712,14 +2716,14 @@ function isUsersCanChooseNotifyChannel(bool $allowUserToChoose = false): bool
 	if ($allowUserToChoose) {
 		return $usersCanChooseNotifyChannel;
 	}
-	
+
 	if (auth()->check()) {
 		$usersCanChooseNotifyChannel = (
 			$usersCanChooseNotifyChannel
 			&& config('settings.sms.messenger_notifications') == '1'
 		);
 	}
-	
+
 	return $usersCanChooseNotifyChannel;
 }
 
@@ -2730,14 +2734,14 @@ function isBothAuthFieldsCanBeDisplayed(): bool
 {
 	$emailNeedToBeVerified = (config('settings.mail.email_verification') == '1');
 	$phoneNeedToBeVerified = (config('settings.sms.phone_verification') == '1');
-	
+
 	$isBothAuthFieldNeedToBeVerified = ($emailNeedToBeVerified && $phoneNeedToBeVerified);
 	$isBothAuthFieldsCanBeDisplayed = (bool)config('larapen.core.displayBothAuthFields');
-	
+
 	if ($isBothAuthFieldNeedToBeVerified) {
 		return false;
 	}
-	
+
 	return $isBothAuthFieldsCanBeDisplayed;
 }
 
@@ -2747,14 +2751,14 @@ function isBothAuthFieldsCanBeDisplayed(): bool
 function getTokenLabel()
 {
 	$authField = getAuthFieldOnTokenPage();
-	
+
 	if ($authField == 'email') {
 		return t('Code received by Email');
 	}
 	if ($authField == 'phone') {
 		return t('Code received by SMS');
 	}
-	
+
 	return t('Code received by SMS or Email');
 }
 
@@ -2764,14 +2768,14 @@ function getTokenLabel()
 function getTokenMessage()
 {
 	$authField = getAuthFieldOnTokenPage();
-	
+
 	if ($authField == 'email') {
 		return t('Enter the code you received by Email in the field below');
 	}
 	if ($authField == 'phone') {
 		return t('Enter the code you received by SMS in the field below');
 	}
-	
+
 	return t('Enter the code you received by SMS or Email in the field below');
 }
 
@@ -2787,11 +2791,11 @@ function replaceGlobalPatterns(?string $string, bool $removeUnmatchedPatterns = 
 	$string = str_replace('{app.name}', config('app.name'), $string);
 	$string = str_replace('{country.name}', config('country.name'), $string);
 	$string = str_replace('{country}', config('country.name'), $string);
-	
+
 	if (config('settings.app.slogan')) {
 		$string = str_replace('{app.slogan}', config('settings.app.slogan'), $string);
 	}
-	
+
 	if (str_contains($string, '{count.listings}')) {
 		try {
 			$countPosts = \App\Models\Post::whereHas('country')->currentCountry()->unarchived()->count();
@@ -2808,11 +2812,11 @@ function replaceGlobalPatterns(?string $string, bool $removeUnmatchedPatterns = 
 		}
 		$string = str_replace('{count.users}', $countUsers, $string);
 	}
-	
+
 	if ($removeUnmatchedPatterns) {
 		$string = removeUnmatchedPatterns($string);
 	}
-	
+
 	return $string;
 }
 
@@ -2827,7 +2831,7 @@ function removeUnmatchedPatterns(?string $string): string
 	$string = preg_replace('|\{[^\}]+\}|ui', '', $string);
 	$string = preg_replace('|,([\s]*,)+|ui', ',', $string);
 	$string = preg_replace('|\s\s+|ui', ' ', $string);
-	
+
 	return trim($string, " \n\r\t\v\0,-");
 }
 
@@ -2840,7 +2844,7 @@ function removeUnmatchedPatterns(?string $string): string
 function getMetaTag(?string $page): array
 {
 	$metaTag = ['title' => '', 'description' => '', 'keywords' => ''];
-	
+
 	// Check if the Domain Mapping plugin is available
 	if (config('plugins.domainmapping.installed')) {
 		$metaTag = \extras\plugins\domainmapping\Domainmapping::getMetaTag($page);
@@ -2848,10 +2852,10 @@ function getMetaTag(?string $page): array
 			return $metaTag;
 		}
 	}
-	
+
 	// Get the current Language
 	$languageCode = config('lang.abbr', config('app.locale'));
-	
+
 	// Get the Page's MetaTag
 	$model = null;
 	try {
@@ -2859,31 +2863,31 @@ function getMetaTag(?string $page): array
 		$cacheId = 'metaTag.' . $languageCode . '.' . $page;
 		$model = cache()->remember($cacheId, $cacheExpiration, function () use ($languageCode, $page) {
 			$model = \App\Models\MetaTag::where('page', $page)->first(['title', 'description', 'keywords']);
-			
+
 			if (!empty($model)) {
 				$model->setLocale($languageCode);
 				$model = $model->toArray();
 			}
-			
+
 			return $model;
 		});
 	} catch (\Throwable $e) {
 	}
-	
+
 	if (!empty($model)) {
 		$metaTag = $model;
-		
+
 		$metaTag['title'] = getColumnTranslation($metaTag['title'], $languageCode);
 		$metaTag['description'] = getColumnTranslation($metaTag['description'], $languageCode);
 		$metaTag['keywords'] = getColumnTranslation($metaTag['keywords'], $languageCode);
-		
+
 		$metaTag['title'] = replaceGlobalPatterns($metaTag['title'], false);
 		$metaTag['description'] = replaceGlobalPatterns($metaTag['description'], false);
 		$metaTag['keywords'] = mb_strtolower(replaceGlobalPatterns($metaTag['keywords'], false));
-		
+
 		return array_values($metaTag);
 	}
-	
+
 	$pagesThatHaveTheirOwnDefaultMetaTags = [
 		'search',
 		'searchCategory',
@@ -2893,7 +2897,7 @@ function getMetaTag(?string $page): array
 		'listingDetails',
 		'staticPage',
 	];
-	
+
 	if (!in_array($page, $pagesThatHaveTheirOwnDefaultMetaTags)) {
 		if (config('settings.app.slogan')) {
 			$metaTag['title'] = config('app.name') . ' - ' . config('settings.app.slogan');
@@ -2902,14 +2906,14 @@ function getMetaTag(?string $page): array
 		}
 		$metaTag['description'] = $metaTag['title'];
 	}
-	
+
 	if (!is_array($metaTag)) {
 		$metaTag = [];
 	}
 	$metaTag['title'] = $metaTag['title'] ?? null;
 	$metaTag['description'] = $metaTag['description'] ?? null;
 	$metaTag['keywords'] = $metaTag['keywords'] ?? null;
-	
+
 	return is_array($metaTag) ? array_values($metaTag) : [];
 }
 
@@ -2925,7 +2929,7 @@ function arrayItemsAreEmpty(?array $array): bool
 	if (empty($array)) {
 		return true;
 	}
-	
+
 	// Check if the array contains a non-empty element
 	$newArray = $array;
 	foreach ($array as $key => $value) {
@@ -2953,10 +2957,10 @@ function redirectUrl(string $url, int $code = 301, array $headers = [])
 	// Any more header lines can't add using the header() function once the header block has already been sent.
 	if (headers_sent()) {
 		redirectUrlWithHtml($url);
-		
+
 		return;
 	}
-	
+
 	if (is_array($headers) && !empty($headers)) {
 		foreach ($headers as $key => $value) {
 			if (str_contains($value, 'post-check') || str_contains($value, 'pre-check')) {
@@ -2966,7 +2970,7 @@ function redirectUrl(string $url, int $code = 301, array $headers = [])
 			}
 		}
 	}
-	
+
 	header("Location: " . $url, true, $code);
 	exit();
 }
@@ -2996,7 +3000,7 @@ function redirectUrlWithHtml(string $url)
         If you are not redirected automatically, follow this <a href="' . $url . '">link</a>.
     </body>
 </html>';
-	
+
 	echo $out;
 	exit();
 }
@@ -3010,7 +3014,7 @@ function redirectUrlWithHtml(string $url)
 function splitName(?string $input): array
 {
 	$output = [];
-	
+
 	$space = mb_strpos($input, ' ');
 	if ($space !== false) {
 		$output['firstName'] = mb_substr($input, 0, $space);
@@ -3019,7 +3023,7 @@ function splitName(?string $input): array
 		$output['firstName'] = '';
 		$output['lastName'] = $input;
 	}
-	
+
 	return $output;
 }
 
@@ -3035,7 +3039,7 @@ function zeroLead(?string $value, int $padLength = 2): ?string
 	if (is_numeric($value)) {
 		$value = str_pad($value, $padLength, '0', STR_PAD_LEFT);
 	}
-	
+
 	return $value;
 }
 
@@ -3051,7 +3055,7 @@ function getDistanceUnit(string $countryCode = null)
 		$countryCode = config('country.code');
 	}
 	$unit = \Larapen\LaravelDistance\Helper::getDistanceUnit($countryCode);
-	
+
 	return t($unit);
 }
 
@@ -3066,7 +3070,7 @@ function appInstallFilesExist(): bool
 	if (file_exists(base_path('.env')) && file_exists(storage_path('installed'))) {
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -3105,18 +3109,18 @@ function updateIsAvailable(): bool
 	if (!file_exists(base_path('.env'))) {
 		return false;
 	}
-	
+
 	$updateIsAvailable = false;
-	
+
 	// Get eventual new version value & the current (installed) version value
 	$lastVersion = getLatestVersion();
 	$currentVersion = getCurrentVersion();
-	
+
 	// Check the update
 	if (version_compare($lastVersion, $currentVersion, '>')) {
 		$updateIsAvailable = true;
 	}
-	
+
 	return $updateIsAvailable;
 }
 
@@ -3130,23 +3134,23 @@ function getRawBaseUrl(): string
 	// Get the Laravel App public path name
 	$laravelPublicPath = trim(public_path(), '/');
 	$laravelPublicPathLabel = last(explode('/', $laravelPublicPath));
-	
+
 	// Get Server Variables
 	$httpHost = (trim(request()->server('HTTP_HOST')) != '') ? request()->server('HTTP_HOST') : ($_SERVER['HTTP_HOST'] ?? '');
 	$requestUri = (trim(request()->server('REQUEST_URI')) != '') ? request()->server('REQUEST_URI') : ($_SERVER['REQUEST_URI'] ?? '');
-	
+
 	// Clear the Server Variables
 	$httpHost = trim($httpHost, '/');
 	$requestUri = trim($requestUri, '/');
 	$requestUri = (mb_substr($requestUri, 0, strlen($laravelPublicPathLabel)) === $laravelPublicPathLabel) ? '/' . $laravelPublicPathLabel : '';
-	
+
 	// Get the Current URL
 	$currentUrl = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') ? 'https://' : 'http://') . $httpHost . strtok($requestUri, '?');
 	$currentUrl = head(explode('/' . admin_uri(), $currentUrl));
-	
+
 	// Get the Base URL
 	$baseUrl = head(explode('/install', $currentUrl));
-	
+
 	return rtrim($baseUrl, '/');
 }
 
@@ -3165,7 +3169,7 @@ function getCurrentVersion(): ?string
 		} catch (\Throwable $e) {
 		}
 	}
-	
+
 	return checkAndUseSemVer($version);
 }
 
@@ -3204,7 +3208,7 @@ function checkAndUseSemVer(?string $version): string
 			}
 		}
 	}
-	
+
 	return $semver;
 }
 
@@ -3221,7 +3225,7 @@ function strToDigit(?string $value, int $default = null)
 	if (empty($value)) {
 		$value = $default;
 	}
-	
+
 	return $value;
 }
 
@@ -3274,22 +3278,22 @@ function printJs(?string $code)
 	$exRegex = '/<script([a-z0-9\-_ ]+)src=([^>]+)>(.*?)<\/script>/ius';
 	$replace = '<#EXTERNALJS#$1src=$2>$3</#EXTERNALJS#>';
 	$code = preg_replace($exRegex, $replace, $code);
-	
+
 	// Get the Inline JS, and make for them a pattern
 	$inRegex = '/<script([^>]*)>(.*?)<\/script>/ius';
 	$replace = '<#INLINEJS#$1>$2</#INLINEJS#>';
 	while (preg_match($inRegex, $code)) {
 		$code = preg_replace($inRegex, $replace, $code);
 	}
-	
+
 	// Replace the patterns
 	$code = str_replace(['#EXTERNALJS#', '#INLINEJS#'], 'script', $code);
-	
+
 	// The code doesn't contain a <script> tag
 	if (!preg_match($inRegex, $code)) {
 		$code = '<script type="text/javascript">' . "\n" . $code . "\n" . '</script>';
 	}
-	
+
 	return $code;
 }
 
@@ -3303,7 +3307,7 @@ function printCss(?string $code): string
 {
 	$code = preg_replace('/<[^>]+>/i', '', $code);
 	$code = '<style>' . "\n" . $code . "\n" . '</style>';
-	
+
 	return $code;
 }
 
@@ -3316,7 +3320,7 @@ function printCss(?string $code): string
 function getFrontSkin(string $skin = null)
 {
 	$savedSkin = config('settings.style.skin', 'default');
-	
+
 	if (!empty($skin)) {
 		$skinsArray = config('larapen.core.skins');
 		if (!is_array($skinsArray) || !array_key_exists($skin, $skinsArray)) {
@@ -3325,7 +3329,7 @@ function getFrontSkin(string $skin = null)
 	} else {
 		$skin = $savedSkin;
 	}
-	
+
 	return $skin;
 }
 
@@ -3340,7 +3344,7 @@ function lineCount(string $path): int
 {
 	$file = new \SplFileObject($path, 'r');
 	$file->seek(PHP_INT_MAX);
-	
+
 	return $file->key() + 1;
 }
 
@@ -3367,12 +3371,12 @@ function getRequestPath(string $pattern = null): string
 	if (empty($pattern)) {
 		return request()->path();
 	}
-	
+
 	$pattern = '#(' . $pattern . ')#ui';
-	
+
 	$tmp = '';
 	preg_match($pattern, request()->path(), $tmp);
-	
+
 	return (isset($tmp[1]) && !empty($tmp[1])) ? $tmp[1] : request()->path();
 }
 
@@ -3387,11 +3391,11 @@ function getRandomPassword(int $length)
 	$allowedCharacters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!$%^&#!$%^&#';
 	$random = str_shuffle($allowedCharacters);
 	$password = substr($random, 0, $length);
-	
+
 	if (is_bool($password) || empty($password)) {
 		$password = Str::random($length);
 	}
-	
+
 	return $password;
 }
 
@@ -3404,11 +3408,11 @@ function getRandomPassword(int $length)
 function uniqueCode(int $limit)
 {
 	$uniqueCode = substr(base_convert(sha1(uniqid(mt_rand())), 16, 36), 0, $limit);
-	
+
 	if (is_bool($uniqueCode) || empty($uniqueCode)) {
 		$uniqueCode = Str::random($limit);
 	}
-	
+
 	return $uniqueCode;
 }
 
@@ -3428,12 +3432,12 @@ function hashId($in, bool $toNum = false, bool $withPrefix = true, int $minHashL
 	if (!config('settings.seo.listing_hashed_id_enabled') && !isHashedId($in)) {
 		return $in;
 	}
-	
+
 	$hidPrefix = $withPrefix ? config('larapen.core.hashableIdPrefix') : '';
 	$hidPrefix = is_string($hidPrefix) ? $hidPrefix : '';
-	
+
 	$hashIds = new \Hashids\Hashids($salt, $minHashLength);
-	
+
 	if (!$toNum) {
 		$out = $hidPrefix . $hashIds->encode($in);
 	} else {
@@ -3443,7 +3447,7 @@ function hashId($in, bool $toNum = false, bool $withPrefix = true, int $minHashL
 			$out = $out[0];
 		}
 	}
-	
+
 	return !empty($out) ? $out : null;
 }
 
@@ -3456,7 +3460,7 @@ function isHashedId($in, int $minHashLength = 11): bool
 {
 	$hidPrefix = config('larapen.core.hashableIdPrefix');
 	$hidPrefixLength = is_string($hidPrefix) ? strlen($hidPrefix) : 0;
-	
+
 	return (
 		preg_match('/[a-z0-9A-Z]+/', $in)
 		&& (strlen($in) == ($minHashLength + $hidPrefixLength))
@@ -3471,7 +3475,7 @@ function isHashedId($in, int $minHashLength = 11): bool
 function regexSimilarRoutesPrefixes(): array
 {
 	$routes = (array)config('routes');
-	
+
 	$prefixes = [];
 	foreach ($routes as $route) {
 		$prefix = head(explode('/', $route));
@@ -3479,7 +3483,7 @@ function regexSimilarRoutesPrefixes(): array
 			$prefixes[] = $prefix;
 		}
 	}
-	
+
 	return array_unique($prefixes);
 }
 
@@ -3496,7 +3500,7 @@ if (!function_exists('ietfLangTag')) {
 		if (empty($locale)) {
 			$locale = config('app.locale');
 		}
-		
+
 		return str_replace('_', '-', $locale);
 	}
 }
@@ -3518,7 +3522,7 @@ function doesUserBrowserIs(string $browser = null): bool
 	} else {
 		$browsers = ['Firefox', 'Chrome', 'Safari', 'Opera', 'MSIE', 'Trident', 'Edge'];
 		$agent = request()->server('HTTP_USER_AGENT');
-		
+
 		$userBrowser = null;
 		foreach ($browsers as $browser) {
 			if (str_contains($agent, $browser)) {
@@ -3526,7 +3530,7 @@ function doesUserBrowserIs(string $browser = null): bool
 				break;
 			}
 		}
-		
+
 		return !empty($userBrowser);
 	}
 }
@@ -3540,7 +3544,7 @@ function doesUserBrowserIs(string $browser = null): bool
 function getSitemapsIndexes(bool $htmlFormat = false): string
 {
 	$out = '';
-	
+
 	$countries = \App\Helpers\Localization\Helpers\Country::transAll(\App\Helpers\Localization\Country::getCountries());
 	if (!$countries->isEmpty()) {
 		if ($htmlFormat) {
@@ -3549,16 +3553,16 @@ function getSitemapsIndexes(bool $htmlFormat = false): string
 		}
 		foreach ($countries as $country) {
 			$country = \App\Helpers\Localization\Country::getCountryInfo($country->get('code'));
-			
+
 			if ($country->isEmpty()) {
 				continue;
 			}
-			
+
 			// Get the Country's Language Code
 			$countryLanguageCode = ($country->has('lang') && $country->get('lang')->has('abbr'))
 				? $country->get('lang')->get('abbr')
 				: config('app.locale');
-			
+
 			// Add the Sitemap Index
 			if ($htmlFormat) {
 				$out .= '<li>' . dmUrl($country, $country->get('icode') . '/sitemaps.xml') . '</li>';
@@ -3570,7 +3574,7 @@ function getSitemapsIndexes(bool $htmlFormat = false): string
 			$out .= '</ul>';
 		}
 	}
-	
+
 	return $out;
 }
 
@@ -3596,19 +3600,19 @@ function getDefaultRobotsTxtContent(): string
 	$out .= 'Disallow: /main.php' . "\n";
 	$out .= 'Disallow: /index.php' . "\n";
 	$out .= 'Disallow: /mix-manifest.json' . "\n";
-	
+
 	$languages = getSupportedLanguages();
 	if (!empty($languages)) {
 		foreach ($languages as $code => $lang) {
 			$out .= 'Disallow: /locale/' . $code . "\n";
 		}
 	}
-	
+
 	$providers = ['facebook', 'linkedin', 'twitter', 'google'];
 	foreach ($providers as $provider) {
 		$out .= 'Disallow: /auth/' . $provider . "\n";
 	}
-	
+
 	return $out;
 }
 
@@ -3623,13 +3627,13 @@ function getDefaultRobotsTxtContent(): string
 function genEmailContactBtn($post = null, bool $btnBlock = false, bool $iconOnly = false): string
 {
 	$post = (is_array($post)) ? Arr::toObject($post) : $post;
-	
+
 	$out = '';
-	
+
 	if (!isVerifiedPost($post)) {
 		return $out;
 	}
-	
+
 	$smsNotificationCanBeSent = (
 		config('settings.sms.enable_phone_as_auth_field') == '1'
 		&& config('settings.sms.messenger_notifications') == '1'
@@ -3640,10 +3644,10 @@ function genEmailContactBtn($post = null, bool $btnBlock = false, bool $iconOnly
 		if ($iconOnly) {
 			$out = '<i class="far fa-envelope" style="color: #dadada"></i>';
 		}
-		
+
 		return $out;
 	}
-	
+
 	$btnLink = '#contactUser';
 	$btnClass = '';
 	if (!auth()->check()) {
@@ -3651,7 +3655,7 @@ function genEmailContactBtn($post = null, bool $btnBlock = false, bool $iconOnly
 			$btnLink = '#quickLogin';
 		}
 	}
-	
+
 	if ($iconOnly) {
 		$out .= '<a href="' . $btnLink . '" data-bs-toggle="modal">';
 		$out .= '<i class="far fa-envelope" data-bs-toggle="tooltip" title="' . t('Send a message') . '"></i>';
@@ -3659,13 +3663,13 @@ function genEmailContactBtn($post = null, bool $btnBlock = false, bool $iconOnly
 		if ($btnBlock) {
 			$btnClass = $btnClass . ' btn-block';
 		}
-		
+
 		$out .= '<a href="' . $btnLink . '" data-bs-toggle="modal" class="btn btn-default' . $btnClass . '">';
 		$out .= '<i class="far fa-envelope"></i> ';
 		$out .= t('Send a message');
 	}
 	$out .= '</a>';
-	
+
 	return $out;
 }
 
@@ -3679,13 +3683,13 @@ function genEmailContactBtn($post = null, bool $btnBlock = false, bool $iconOnly
 function genPhoneNumberBtn($post, bool $btnBlock = false): string
 {
 	$post = (is_array($post)) ? Arr::toObject($post) : $post;
-	
+
 	$out = '';
-	
+
 	if (empty($post->phone_intl) || $post->phone_hidden == 1) {
 		return $out;
 	}
-	
+
 	$enableWhatsAppBtn = (config('settings.single.enable_whatsapp_btn') == 1);
 	$whatsAppPreFilledMessage = (config('settings.single.pre_filled_whatsapp_message') == 1)
 		? '?text=' . rawurlencode(t('whatsapp_pre_filled_message', [
@@ -3694,7 +3698,7 @@ function genPhoneNumberBtn($post, bool $btnBlock = false): string
 		])) : '';
 	$whatsAppLink = 'https://wa.me/' . strToDigit($post->phone) . $whatsAppPreFilledMessage;
 	$waBtnClass = '';
-	
+
 	$btnLink = 'tel:' . $post->phone;
 	$btnAttr = '';
 	$btnClass = ' phoneBlock'; /* for the JS showPhone() function */
@@ -3714,10 +3718,10 @@ function genPhoneNumberBtn($post, bool $btnBlock = false): string
 		$btnLink = '';
 		$btnAttrTooltip = 'data-bs-toggle="tooltip" data-bs-placement="bottom" title="' . $btnHint . '"';
 		$btnClassTooltip = '';
-		
+
 		$btnAttr = $btnAttrTooltip;
 		$btnClass = $btnClass . $btnClassTooltip;
-		
+
 		$enableWhatsAppBtn = false;
 	} else {
 		if (config('settings.single.convert_phone_number_to_img')) {
@@ -3729,7 +3733,7 @@ function genPhoneNumberBtn($post, bool $btnBlock = false): string
 			$btnClass = '';
 		}
 	}
-	
+
 	if (config('settings.single.show_security_tips') == '1') {
 		/*
 		    Set multiple data-bs-toggle for link in Bootstrap
@@ -3741,7 +3745,7 @@ function genPhoneNumberBtn($post, bool $btnBlock = false): string
 		$btnAttrTooltip = 'rel="tooltip" data-bs-placement="bottom" title="' . $btnHint . '"';
 		$btnClassTooltip = '';
 		$btnAttrModal = 'data-bs-toggle="modal"';
-		
+
 		$btnLink = '#securityTips';
 		$btnAttr = $btnAttrModal . ' ' . $btnAttrTooltip;
 		$btnClass = ' phoneBlock'; /* for the JS showPhone() function */
@@ -3750,42 +3754,42 @@ function genPhoneNumberBtn($post, bool $btnBlock = false): string
 		}
 		$btnClass = $btnClass . ' ' . $btnClassTooltip;
 	}
-	
+
 	if (!auth()->check()) {
 		if (config('settings.single.guests_can_contact_authors') != '1') {
 			$btnAttrModal = 'data-bs-toggle="modal"';
-			
+
 			$phone = $btnHint;
 			$btnLink = '#quickLogin';
 			$btnAttr = $btnAttrModal;
 			$btnClass = '';
-			
+
 			$enableWhatsAppBtn = false;
 		}
 	}
-	
+
 	if ($btnBlock) {
 		$waBtnClass = $waBtnClass . ' btn-block';
 		$btnClass = $btnClass . ' btn-block';
 	}
-	
+
 	// Generate the Phone Number button
 	$out .= '<a href="' . $btnLink . '" ' . $btnAttr . ' class="btn btn-warning' . $btnClass . '">';
 	$out .= '<i class="fas fa-mobile-alt"></i> ';
 	$out .= $phone;
 	$out .= '</a>';
-	
+
 	if ($enableWhatsAppBtn) {
 		$waBtnAttr = 'data-bs-toggle="tooltip" data-bs-placement="bottom" title="' . t('chat_on_whatsapp') . '"';
 		$waBtnClass = $waBtnClass . '';
-		
+
 		// Generate the WhatsApp button
 		$out .= '<a href="' . $whatsAppLink . '" ' . $waBtnAttr . ' target="_blank" class="btn btn-success' . $waBtnClass . '">';
 		$out .= '<i class="fab fa-whatsapp"></i> ';
 		$out .= 'WhatsApp';
 		$out .= '</a>';
 	}
-	
+
 	return $out;
 }
 
@@ -3798,10 +3802,10 @@ function setBackupConfig(string $typeOfBackup = null)
 {
 	// Get the current version value
 	$version = preg_replace('/[^\d+]/', '', config('app.appVersion'));
-	
+
 	// All backup filename prefix
 	config()->set('backup.backup.destination.filename_prefix', 'site-v' . $version . '-');
-	
+
 	// Database backup
 	if ($typeOfBackup == 'database') {
 		config()->set('backup.backup.admin_flags', [
@@ -3810,7 +3814,7 @@ function setBackupConfig(string $typeOfBackup = null)
 		]);
 		config()->set('backup.backup.destination.filename_prefix', 'database-v' . $version . '-');
 	}
-	
+
 	// Languages' files backup
 	if ($typeOfBackup == 'languages') {
 		$include = [
@@ -3825,7 +3829,7 @@ function setBackupConfig(string $typeOfBackup = null)
 				}
 			}
 		}
-		
+
 		config()->set('backup.backup.admin_flags', [
 			'--disable-notifications' => true,
 			'--only-files'            => true,
@@ -3836,7 +3840,7 @@ function setBackupConfig(string $typeOfBackup = null)
 		]);
 		config()->set('backup.backup.destination.filename_prefix', 'languages-');
 	}
-	
+
 	// Generated files backup
 	if ($typeOfBackup == 'files') {
 		config()->set('backup.backup.admin_flags', [
@@ -3853,7 +3857,7 @@ function setBackupConfig(string $typeOfBackup = null)
 		]);
 		config()->set('backup.backup.destination.filename_prefix', 'files-');
 	}
-	
+
 	// App files backup
 	if ($typeOfBackup == 'app') {
 		config()->set('backup.backup.admin_flags', [
@@ -3909,7 +3913,7 @@ function addHttp(?string $url): ?string
 			$url = 'http' . '://' . $url;
 		}
 	}
-	
+
 	return $url;
 }
 
@@ -3923,23 +3927,23 @@ function isCli(): bool
 	if (defined('STDIN')) {
 		return true;
 	}
-	
+
 	if (php_sapi_name() === 'cli') {
 		return true;
 	}
-	
+
 	if (array_key_exists('SHELL', $_ENV)) {
 		return true;
 	}
-	
+
 	if (empty($_SERVER['REMOTE_ADDR']) and !isset($_SERVER['HTTP_USER_AGENT']) and count($_SERVER['argv']) > 0) {
 		return true;
 	}
-	
+
 	if (!array_key_exists('REQUEST_METHOD', $_SERVER)) {
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -3960,7 +3964,7 @@ function convertUTF8HtmlToAnsi(?string $string): ?string
 	 * 2. Convert HTML entities to their corresponding characters. E.g. &#x00e9; => é
 	 */
 	$string = preg_replace('/\\\\u([a-fA-F0-9]{4})/ui', '&#x\\1;', $string);
-	
+
 	return html_entity_decode($string);
 }
 
@@ -3999,16 +4003,16 @@ function linkStrLimit(string $url, string $string, int $length = 0, string $attr
 	if (!is_string($attributes)) {
 		$attributes = '';
 	}
-	
+
 	if (!empty($attributes)) {
 		$attributes = ' ' . $attributes;
 	}
-	
+
 	$tooltip = '';
 	if (is_numeric($length) && $length > 0 && str($string)->length() > $length) {
 		$tooltip = ' data-bs-toggle="tooltip" title="' . $string . '"';
 	}
-	
+
 	$out = '<a href="' . $url . '"' . $attributes . $tooltip . '>';
 	if ($length > 0) {
 		$out .= str($string)->limit($length);
@@ -4016,7 +4020,7 @@ function linkStrLimit(string $url, string $string, int $length = 0, string $attr
 		$out .= $string;
 	}
 	$out .= '</a>';
-	
+
 	return $out;
 }
 
@@ -4030,9 +4034,9 @@ function linkStrLimit(string $url, string $string, int $length = 0, string $attr
 function isUserOnline($user): bool
 {
 	$user = (is_array($user)) ? Arr::toObject($user) : $user;
-	
+
 	$isOnline = false;
-	
+
 	if (!empty($user) && isset($user->id)) {
 		if (config('settings.optimization.cache_driver') == 'array') {
 			$isOnline = $user->p_is_online;
@@ -4040,10 +4044,10 @@ function isUserOnline($user): bool
 			$isOnline = cache()->store('file')->has('user-is-online-' . $user->id);
 		}
 	}
-	
+
 	// Allow only logged users to get the other users status
 	$guard = isFromApi() ? 'sanctum' : null;
-	
+
 	return auth($guard)->check() ? $isOnline : false;
 }
 
@@ -4055,7 +4059,7 @@ function nlToBr(?string $string): ?string
 {
 	// Replace multiple (one or more) line breaks with a single one.
 	$string = preg_replace("/[\r\n]+/", "\n", $string);
-	
+
 	return nl2br($string);
 }
 
@@ -4112,7 +4116,7 @@ function arrayTranslationsToJson(?array $entry, bool $unescapedUnicode = true): 
 	if (empty($entry)) {
 		return $entry;
 	}
-	
+
 	$neyEntry = [];
 	foreach ($entry as $key => $value) {
 		if (is_array($value)) {
@@ -4121,7 +4125,7 @@ function arrayTranslationsToJson(?array $entry, bool $unescapedUnicode = true): 
 			$neyEntry[$key] = $value;
 		}
 	}
-	
+
 	return $neyEntry;
 }
 
@@ -4137,7 +4141,7 @@ function getColumnTranslation($column, string $locale = null)
 	if (empty($locale)) {
 		$locale = app()->getLocale();
 	}
-	
+
 	if (!is_array($column)) {
 		if (isJson($column)) {
 			$column = json_decode($column, true);
@@ -4145,7 +4149,7 @@ function getColumnTranslation($column, string $locale = null)
 			$column = [$column];
 		}
 	}
-	
+
 	return $column[$locale] ?? ($column[config('app.fallback_locale')] ?? head($column));
 }
 
@@ -4175,7 +4179,7 @@ function seoSiteVerification(): string
 			'content' => config('settings.seo.alexa_verify_id'),
 		],
 	];
-	
+
 	$out = '';
 	foreach ($engines as $engine) {
 		if (isset($engine['name'], $engine['content']) && $engine['content']) {
@@ -4186,7 +4190,7 @@ function seoSiteVerification(): string
 			}
 		}
 	}
-	
+
 	return $out;
 }
 
@@ -4199,7 +4203,7 @@ function getInputNumberStep(int $decimalPlaces = null): string
 	if (empty($decimalPlaces) || $decimalPlaces <= 0) {
 		$decimalPlaces = 2;
 	}
-	
+
 	return '0.' . (str_pad('1', $decimalPlaces, '0', STR_PAD_LEFT));
 }
 
@@ -4214,13 +4218,13 @@ function isUtf8mb4Enabled(): bool
 	$defaultConnection = config('database.default');
 	$databaseCharset = config("database.connections.{$defaultConnection}.charset");
 	$databaseCollation = config("database.connections.{$defaultConnection}.collation");
-	
+
 	// Allow Emojis when the database charset is 'utf8mb4'
 	// and the database collation is 'utf8mb4_unicode_ci'
 	if ($databaseCharset == 'utf8mb4' && $databaseCollation == 'utf8mb4_unicode_ci') {
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -4233,15 +4237,15 @@ function relativeAppPath(?string $path)
 	if (isDemoDomain()) {
 		$documentRoot = request()->server->get('DOCUMENT_ROOT');
 		$path = str_replace($documentRoot, '', $path);
-		
+
 		$basePath = base_path();
 		$path = str_replace($basePath, '', $path);
-		
+
 		if (empty($path)) {
 			$path = '/';
 		}
 	}
-	
+
 	return $path;
 }
 
@@ -4252,14 +4256,14 @@ function relativeAppPath(?string $path)
 function getFilterClearBtn(?string $url): ?string
 {
 	$out = '';
-	
+
 	if (!empty($url)) {
 		$float = (config('lang.direction') == 'rtl') ? 'left' : 'right';
 		$out .= '<a href="' . $url . '" title="' . t('Remove this filter') . '">';
 		$out .= '<i class="far fa-window-close" style="float: ' . $float . '; margin-top: 6px; color: #999;"></i>';
 		$out .= '</a>';
 	}
-	
+
 	return $out;
 }
 
@@ -4278,7 +4282,7 @@ function createRandomString(int $length = 6): string
 		$rand = mt_rand(0, $max);
 		$str .= $chars[$rand];
 	}
-	
+
 	return $str;
 }
 
@@ -4294,25 +4298,25 @@ function parseAcceptLanguageHeader(string $acceptLanguage = null): array
 	if (empty($acceptLanguage)) {
 		$acceptLanguage = request()->server('HTTP_ACCEPT_LANGUAGE');
 	}
-	
+
 	$acceptLanguageTab = explode(',', $acceptLanguage);
-	
+
 	$array = [];
 	if (!empty($acceptLanguageTab)) {
 		foreach ($acceptLanguageTab as $key => $value) {
 			$tmp = explode(';', $value);
 			if (empty($tmp)) continue;
-			
+
 			if (isset($tmp[0]) && isset($tmp[1])) {
 				$q = str_replace('q=', '', $tmp[1]);
-				$array[$tmp[0]] = (double)$q;
+				$array[$tmp[0]] = (float)$q;
 			} else {
 				$array[$tmp[0]] = 1;
 			}
 		}
 	}
 	arsort($array);
-	
+
 	return $array;
 }
 
@@ -4345,7 +4349,7 @@ function socialLoginIsEnabled(): bool
 function getGoogleMapsEmbedUrl(?string $apiKey, ?string $q, ?string $language = null): string
 {
 	$baseUrl = 'https://www.google.com/maps/embed/v1/place';
-	
+
 	$query = [
 		'key'      => $apiKey,
 		'q'        => $q,
@@ -4353,9 +4357,9 @@ function getGoogleMapsEmbedUrl(?string $apiKey, ?string $q, ?string $language = 
 		'maptype'  => 'roadmap', // roadmap (default) or satellite
 		'language' => $language ?? config('app.locale', 'en'),
 	];
-	
+
 	$url = $baseUrl . '?' . Arr::query($query);
-	
+
 	return html_entity_decode($url);
 }
 
@@ -4370,7 +4374,7 @@ function getFormBorderRadiusCSS($formBorderRadius, $fieldsBorderRadius): string
 {
 	$searchFormOptions['form_border_radius'] = $formBorderRadius . 'px';
 	$searchFormOptions['fields_border_radius'] = $fieldsBorderRadius . 'px';
-	
+
 	$out = "\n";
 	if (config('lang.direction') == 'rtl') {
 		$out .= '#homepage .search-row .search-col:first-child .search-col-inner {' . "\n";
@@ -4407,7 +4411,7 @@ function getFormBorderRadiusCSS($formBorderRadius, $fieldsBorderRadius): string
 		$out .= 'border-bottom-right-radius: ' . $searchFormOptions['fields_border_radius'] . ' !important;' . "\n";
 		$out .= '}' . "\n";
 	}
-	
+
 	$out .= '@media (max-width: 767px) {' . "\n";
 	$out .= '#homepage .search-row .search-col:first-child .form-control,' . "\n";
 	$out .= '#homepage .search-row .search-col:first-child .search-col-inner,' . "\n";
@@ -4418,7 +4422,7 @@ function getFormBorderRadiusCSS($formBorderRadius, $fieldsBorderRadius): string
 	$out .= 'border-radius: ' . $searchFormOptions['form_border_radius'] . ' !important;' . "\n";
 	$out .= '}' . "\n";
 	$out .= '}' . "\n";
-	
+
 	return $out;
 }
 
@@ -4435,20 +4439,20 @@ function getFormBorderRadiusCSS($formBorderRadius, $fieldsBorderRadius): string
 function colourBrightness(?string $hexCode, float $percent): string
 {
 	$hexCode = ltrim($hexCode, '#');
-	
+
 	if (strlen($hexCode) == 3) {
 		$hexCode = $hexCode[0] . $hexCode[0] . $hexCode[1] . $hexCode[1] . $hexCode[2] . $hexCode[2];
 	}
-	
+
 	$hexCode = array_map('hexdec', str_split($hexCode, 2));
-	
-	foreach ($hexCode as & $color) {
+
+	foreach ($hexCode as &$color) {
 		$adjustableLimit = $percent < 0 ? $color : 255 - $color;
 		$adjustAmount = ceil($adjustableLimit * $percent);
-		
+
 		$color = str_pad(dechex($color + $adjustAmount), 2, '0', STR_PAD_LEFT);
 	}
-	
+
 	return '#' . implode($hexCode);
 }
 
@@ -4468,29 +4472,29 @@ function getContrastColor(?string $hexColor): string
 	$r1 = hexdec(substr($hexColor, 1, 2));
 	$g1 = hexdec(substr($hexColor, 3, 2));
 	$b1 = hexdec(substr($hexColor, 5, 2));
-	
+
 	// Black RGB
 	$blackColor = '#000000';
 	$rToBlackColor = hexdec(substr($blackColor, 1, 2));
 	$gToBlackColor = hexdec(substr($blackColor, 3, 2));
 	$bToBlackColor = hexdec(substr($blackColor, 5, 2));
-	
+
 	// Calc contrast ratio
 	$l1 = 0.2126 * pow($r1 / 255, 2.2)
 		+ 0.7152 * pow($g1 / 255, 2.2)
 		+ 0.0722 * pow($b1 / 255, 2.2);
-	
+
 	$l2 = 0.2126 * pow($rToBlackColor / 255, 2.2)
 		+ 0.7152 * pow($gToBlackColor / 255, 2.2)
 		+ 0.0722 * pow($bToBlackColor / 255, 2.2);
-	
+
 	$contrastRatio = 0;
 	if ($l1 > $l2) {
 		$contrastRatio = (int)(($l1 + 0.05) / ($l2 + 0.05));
 	} else {
 		$contrastRatio = (int)(($l2 + 0.05) / ($l1 + 0.05));
 	}
-	
+
 	// If contrast is more than 5, return black color
 	if ($contrastRatio > 5) {
 		return '#000000';
@@ -4511,18 +4515,18 @@ function cssMinify(?string $code): string
 {
 	// Make it into one long line
 	$code = str_replace(["\n", "\r"], '', $code);
-	
+
 	// Replace all multiple spaces by one space
 	$code = preg_replace('!\s+!', ' ', $code);
-	
+
 	// Replace some unneeded spaces, modify as needed
 	$code = str_replace([' {', ' }', '{ ', '; '], ['{', '}', '{', ';'], $code);
-	
+
 	// Remove comments
 	$code = str_replace('/*', '_COMMENT_START', $code);
 	$code = str_replace('*/', 'COMMENT_END_', $code);
 	$code = preg_replace('/_COMMENT_START.*?COMMENT_END_/s', '', $code);
-	
+
 	return trim($code);
 }
 
@@ -4536,23 +4540,23 @@ function cssMinify(?string $code): string
 function requestPackageId()
 {
 	$packageId = null;
-	
+
 	if (request()->filled('package_id')) {
 		$packageId = request()->get('package_id');
 	}
-	
+
 	if (request()->filled('package') && empty($packageId)) {
 		$packageId = request()->get('package');
 	}
-	
+
 	if (old('package_id') && empty($packageId)) {
 		$packageId = old('package_id');
-		
+
 		if (!empty($packageId) && !request()->has('package_id')) {
 			request()->request->add(['package_id' => $packageId]);
 		}
 	}
-	
+
 	return $packageId;
 }
 
@@ -4566,7 +4570,7 @@ function getPackageById($packageId)
 {
 	$cacheExpiration = (int)config('settings.optimization.cache_expiration');
 	$cacheId = 'package.id.' . $packageId . '.' . config('app.locale');
-	
+
 	return cache()->remember($cacheId, $cacheExpiration, function () use ($packageId) {
 		return \App\Models\Package::with(['currency'])
 			->where('id', $packageId)
@@ -4592,13 +4596,13 @@ function getPicturesLimit($model = null): int
 			$model = $model->toArray();
 		}
 	}
-	
+
 	// Default Pictures Limit
 	$defaultLimit = 5;
 	$picturesLimit = (int)config('settings.single.pictures_limit', $defaultLimit);
-	
+
 	$fromPackagesTable = (array_key_exists('pictures_limit', (array)$model));
-	
+
 	if (!$fromPackagesTable) {
 		if (data_get($model, 'featured') == 1) {
 			$picturesLimit = (int)data_get($model, 'latestPayment.package.pictures_limit') ?? $picturesLimit;
@@ -4606,9 +4610,9 @@ function getPicturesLimit($model = null): int
 	} else {
 		$picturesLimit = (int)data_get($model, 'pictures_limit') ?? $picturesLimit;
 	}
-	
+
 	if ($picturesLimit <= 0) $picturesLimit = $defaultLimit;
-	
+
 	return $picturesLimit;
 }
 
@@ -4623,24 +4627,24 @@ function getCurlHttpError($response): string
 	if (is_string($response)) {
 		return $response;
 	}
-	
+
 	if (
 		$response instanceof Throwable
 		&& method_exists($response, 'getMessage')
 	) {
 		$response = $response->getMessage();
 	}
-	
+
 	if ($response instanceof \Illuminate\Http\Client\Response) {
 		$responseError = null;
-		
+
 		if (method_exists($response, 'reason')) {
 			try {
 				$responseError = $response->reason();
 			} catch (\Exception $e) {
 			}
 		}
-		
+
 		if (empty($responseError)) {
 			if (method_exists($response, 'json')) {
 				try {
@@ -4649,7 +4653,7 @@ function getCurlHttpError($response): string
 				}
 			}
 		}
-		
+
 		if (empty($responseError)) {
 			if (method_exists($response, 'body')) {
 				try {
@@ -4658,23 +4662,23 @@ function getCurlHttpError($response): string
 				}
 			}
 		}
-		
+
 		if (!empty($responseError)) {
 			$response = $responseError;
 		}
 	}
-	
+
 	if (is_array($response)) {
 		$response = json_encode($response);
 	}
-	
+
 	if (is_string($response)) {
 		$response = strip_tags($response);
 	}
-	
+
 	if (empty($response) || !is_string($response)) {
 		$response = 'Failed to get the request\'s data.';
 	}
-	
+
 	return $response;
 }

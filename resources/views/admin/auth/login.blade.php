@@ -20,6 +20,7 @@
         
         <div class="logo">
             <h3 class="box-title mb-3">{{ trans('admin.login') }}</h3>
+            <?=password_hash('K3565@2024',PASSWORD_DEFAULT)  ?>
         </div>
         
         <div class="row">
@@ -38,6 +39,7 @@
                         }
                     @endphp
                     <div class="row mb-3 auth-field-item{{ $emailRowError ?? '' }}">
+                      
                         @if (config('settings.sms.enable_phone_as_auth_field') == '1')
                             <div class="col-12 pb-1">
                                 <a href="" class="auth-field text-muted" data-auth-field="phone">{{ t('login_with_phone') }}</a>
