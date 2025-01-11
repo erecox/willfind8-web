@@ -22,7 +22,6 @@ use App\Helpers\Search\Traits\GroupBy;
 use App\Helpers\Search\Traits\Having;
 use App\Helpers\Search\Traits\OrderBy;
 use App\Helpers\Search\Traits\Relations;
-use App\Helpers\Search\Traits\Select;
 use App\Helpers\Search\Traits\SelectForSuggestion;
 use App\Http\Controllers\Api\Base\ApiResponseTrait;
 use App\Http\Resources\EntityCollection;

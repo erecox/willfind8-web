@@ -35,16 +35,11 @@ trait SelectForSuggestion
 			'city_id'
 		];
 
-		// remove hidden columns
-		$select = array_filter($select, function ($col) use ($hidden) {
-			if (str_contains($col, '.')) $col = explode('.', $col)[1];
-			return !in_array($col, $hidden);
-		});
 		// Default GroupBy Columns
 		$groupBy = [$this->postsTable . '.id'];
 
 		// Merge Columns
-		$this->select = array_merge($this->select, $select);
+		$this->select = $select;
 		$this->groupBy = array_merge($this->groupBy, $groupBy);
 
 		// Add the Select Columns
