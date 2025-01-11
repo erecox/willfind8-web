@@ -232,16 +232,37 @@ trait SearchTrait
 		];
 		$hidden = ['description','email_verified_at','phone_verified_at','email_token','phone_token'];
 
-		$searchData = $this->searchPosts($input, $preSearch, $fields,$hidden);
-		$preSearch = $searchData['preSearch'] ?? $preSearch;
+		//$searchData = $this->searchPosts($input, $preSearch, $fields,$hidden);
+		//$preSearch = $searchData['preSearch'] ?? $preSearch;
 
-		$data = [
+		/*$data = [
 			'success' => true,
 			'message' => $searchData['message'] ?? null, 
 			'result'  => $searchData['posts'],
 			'extra'   => [
 				'count'     => $searchData['count'] ?? [],
 			],
+		];*/
+
+		$countryCode = request()->get('country_code', config('country.code'));
+
+		$posts = Post::query()->with(['user'])->whereHas('country')->countryOf($countryCode);
+		// Sorting
+		$posts = $this->applySorting($posts, ['created_at']);
+
+		$posts = $posts->paginate($this->perPage);
+
+		// If the request is made from the app's Web environment,
+		// use the Web URL as the pagination's base URL
+		$posts = setPaginationBaseUrl($posts);
+
+		$resourceCollection = new EntityCollection(class_basename($this), $posts);
+		$message = ($posts->count() <= 0) ? t('no_posts_found') : null;
+		$resourceCollection = $this->respondWithCollection($resourceCollection, $message);
+
+		$data = json_decode($resourceCollection->content(), true);
+		$data['extra'] = [
+			'count'     => $count ?? null
 		];
 
 		return $this->apiResponse($data);
