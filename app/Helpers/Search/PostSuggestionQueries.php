@@ -102,7 +102,7 @@ class PostSuggestionQueries
 		$this->setSelect();
 
 		// Relations
-		$this->setRelations();
+		$this->setSuggestionRelations();
 	}
 
 	/**

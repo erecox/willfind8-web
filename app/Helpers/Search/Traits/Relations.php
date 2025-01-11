@@ -68,5 +68,11 @@ trait Relations
 		
 		// city
 		$this->posts->with('city')->has('city');
+
+		$this->posts->with([
+			'user',
+			'user.permissions',
+			'user.roles',
+		]);
 	}
 }
