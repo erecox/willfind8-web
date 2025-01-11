@@ -249,7 +249,10 @@ trait SearchTrait
 
 		$this->posts = Post::query();
 		$this->applyFilters();
-
+		$this->applyGroupBy();
+		$this->applyHaving();
+		$this->applyOrderBy();
+		
 		$posts = $this->posts->paginate($this->perPage);
 
 		// If the request is made from the app's Web environment,
