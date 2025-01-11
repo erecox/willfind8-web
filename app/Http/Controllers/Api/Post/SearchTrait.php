@@ -17,6 +17,7 @@
 namespace App\Http\Controllers\Api\Post;
 
 use App\Helpers\Search\PostQueries;
+use App\Helpers\Search\Traits\Filters;
 use App\Http\Controllers\Api\Post\Search\CategoryTrait;
 use App\Http\Controllers\Api\Post\Search\LocationTrait;
 use App\Http\Controllers\Api\Post\Search\SidebarTrait;
@@ -30,7 +31,7 @@ use Larapen\LaravelDistance\Libraries\mysql\DistanceHelper;
 
 trait SearchTrait
 {
-	use CategoryTrait, LocationTrait, SidebarTrait;
+	use CategoryTrait, LocationTrait, SidebarTrait,Filters;
 
 	/**
 	 * @return \Illuminate\Http\JsonResponse
@@ -246,11 +247,10 @@ trait SearchTrait
 
 		$countryCode = request()->get('country_code', config('country.code'));
 
-		$posts = Post::query();
-		// Sorting
-		$posts = $this->applySorting($posts, ['created_at']);
+		$this->posts = Post::query();
+		$this->applyFilters();
 
-		$posts = $posts->paginate($this->perPage);
+		$posts = $this->posts->paginate($this->perPage);
 
 		// If the request is made from the app's Web environment,
 		// use the Web URL as the pagination's base URL
