@@ -230,8 +230,9 @@ trait SearchTrait
 			'perPage' => request()->get('perPage'),
 			'orderBy' => $orderBy,
 		];
+		$hidden = ['description','email_verified_at','phone_verified_at','email_token','phone_token'];
 
-		$searchData = $this->searchPosts($input, $preSearch, $fields);
+		$searchData = $this->searchPosts($input, $preSearch, $fields,$hidden);
 		$preSearch = $searchData['preSearch'] ?? $preSearch;
 
 		$data = [
