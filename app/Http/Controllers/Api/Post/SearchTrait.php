@@ -246,7 +246,7 @@ trait SearchTrait
 
 		$countryCode = request()->get('country_code', config('country.code'));
 
-		$posts = Post::query()->with(['user'])->whereHas('country')->countryOf($countryCode);
+		$posts = Post::query();
 		// Sorting
 		$posts = $this->applySorting($posts, ['created_at']);
 
