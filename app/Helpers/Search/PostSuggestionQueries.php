@@ -100,7 +100,7 @@ class PostSuggestionQueries
 		$this->postsTable = (new Post())->getTable();
 
 		// Add Default Select Columns
-		$this->setSelect($hidden);
+		$this->setSelect();
 
 		// Relations
 		$this->setRelations();
@@ -138,18 +138,7 @@ class PostSuggestionQueries
 
 		// If the request is made from the app's Web environment,
 		// use the Web URL as the pagination's base URL
-		$posts = setPaginationBaseUrl($posts);
-
-		// Add eventual web queries to $queriesToRemove
-		$queriesToRemove = array_merge($queriesToRemove, $this->webGlobalQueries);
-		$webController = null;
-		if (request()->hasHeader('X-WEB-CONTROLLER')) {
-			$webController = request()->header('X-WEB-CONTROLLER');
-		}
-		if (!empty($webController)) {
-			$webQueries = $this->webQueriesPerController[$webController] ?? [];
-			$queriesToRemove = array_merge($queriesToRemove, $webQueries);
-		}
+		//$posts = setPaginationBaseUrl($posts);
 
 		// Append request queries in the pagination links
 		$query = !empty($queriesToRemove)
