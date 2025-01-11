@@ -50,11 +50,11 @@ trait SearchTrait
 		$fields = collect();
 
 		// Advanced Query (Query with the 'op' parameter)
-		$options = ['search', 'suggestion', 'premium', 'latest', 'free', 'premiumFirst'];
+		$options = ['search', 'premium', 'latest', 'free', 'premiumFirst'];
 
 		$op = request()->get('op');
 
-		if (in_array($op, $options) && $op === 'similar') {
+		if (in_array($op, $options) || $op === 'similar') {
 			$embed = ['user', 'category', 'parent', 'postType', 'city', 'savedByLoggedUser', 'pictures', 'latestPayment', 'package'];
 			request()->query->add(['embed' => implode(',', $embed)]);
 
@@ -119,7 +119,7 @@ trait SearchTrait
 			}
 
 			return $this->apiResponse($data);
-		} else if (in_array($op, $options) && $op === 'suggestion') {
+		} else if ($op === 'suggestion') {
 			// Suggestion API Query
 			return $this->suggestionQuery();
 		}
