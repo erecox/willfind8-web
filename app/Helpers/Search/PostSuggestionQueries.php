@@ -23,6 +23,7 @@ use App\Helpers\Search\Traits\Having;
 use App\Helpers\Search\Traits\OrderBy;
 use App\Helpers\Search\Traits\Relations;
 use App\Helpers\Search\Traits\Select;
+use App\Helpers\Search\Traits\SelectForSuggestion;
 use App\Http\Controllers\Api\Base\ApiResponseTrait;
 use App\Http\Resources\EntityCollection;
 use App\Models\Post;
@@ -31,7 +32,7 @@ use Illuminate\Support\Facades\DB;
 
 class PostSuggestionQueries
 {
-	use Select, Relations, Filters, GroupBy, Having, OrderBy;
+	use SelectForSuggestion, Relations, Filters, GroupBy, Having, OrderBy;
 	use ApiResponseTrait;
 
 	private static bool $dbModeStrict = false;
