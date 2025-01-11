@@ -39,7 +39,7 @@ trait SearchTrait
 	 */
 	public function getPosts(): \Illuminate\Http\JsonResponse
 	{
-	
+
 		// Create the MySQL Distance Calculation function, If it doesn't exist
 		$distanceCalculationFormula = config('settings.list.distance_calculation_formula', 'haversine');
 		if (!DistanceHelper::checkIfDistanceCalculationFunctionExists($distanceCalculationFormula)) {
@@ -119,20 +119,9 @@ trait SearchTrait
 			}
 
 			return $this->apiResponse($data);
-
 		} else if (in_array($op, $options) && $op === 'suggestion') {
 			// Suggestion API Query
-			$posts = $this->suggestionQuery();
-			$resourceCollection = new EntityCollection(class_basename($this), $posts);
-			$message = ($posts->count() <= 0) ? t('no_posts_found') : null;
-			$resourceCollection = $this->respondWithCollection($resourceCollection, $message);
-
-			$data = json_decode($resourceCollection->content(), true);
-			$data['extra'] = [
-				'count'     => $count ?? null
-			];
-
-			return $this->apiResponse($data);
+			return $this->suggestionQuery();
 		}
 
 		// Normal API Query (Search without the 'op' parameter)
@@ -233,23 +222,28 @@ trait SearchTrait
 	 */
 	protected function suggestionQuery()
 	{
-		$countryCode = request()->get('country_code', config('country.code'));
-		$posts = Post::query()->with(['user'])->whereHas('country')->countryOf($countryCode);
+		$orderBy = request()->get('orderBy');
+		$orderBy = ($orderBy != 'random') ? $orderBy : null;
 
-		$embed = explode(',', request()->get('embed'));
+		$input = [
+			'op'      => 'suggestion',
+			'perPage' => request()->get('perPage'),
+			'orderBy' => $orderBy,
+		];
 
-		if (in_array('category', $embed)) {
-			$posts->with('category');
-		}
+		$searchData = $this->searchPosts($input, $preSearch, $fields);
+		$preSearch = $searchData['preSearch'] ?? $preSearch;
 
-		if (in_array('city', $embed)) {
-			$posts->with('city');
-		}
-		// Sorting
-		$posts = $this->applySorting($posts, ['created_at']);
+		$data = [
+			'success' => true,
+			'message' => $searchData['message'] ?? null, 
+			'result'  => $searchData['posts'],
+			'extra'   => [
+				'count'     => $searchData['count'] ?? [],
+			],
+		];
 
-		$posts = $posts->paginate($this->perPage);
-		return $posts;
+		return $this->apiResponse($data);
 	}
 
 	/**
@@ -260,7 +254,7 @@ trait SearchTrait
 	 * @throws \Psr\Container\ContainerExceptionInterface
 	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
-	protected function searchPosts($input, &$preSearch, &$fields): array
+	protected function searchPosts($input, &$preSearch, &$fields, $hidden = []): array
 	{
 		$location = $this->getLocation();
 
@@ -276,7 +270,7 @@ trait SearchTrait
 
 		$queriesToRemove = ['op', 'embed'];
 
-		return (new PostQueries($input, $preSearch))->fetch($queriesToRemove);
+		return (new PostQueries($input, $preSearch, $hidden))->fetch($queriesToRemove);
 	}
 
 	/**

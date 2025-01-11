@@ -33,35 +33,35 @@ class PostQueries
 {
 	use Select, Relations, Filters, GroupBy, Having, OrderBy;
 	use ApiResponseTrait;
-	
+
 	private static bool $dbModeStrict = false;
 	protected static int $cacheExpiration = 300; // 5mn (60s * 5)
-	
+
 	public $country;
 	public $lang;
-	
+
 	// Default Inputs (op, perPage, cacheExpiration & orderBy)
 	// These inputs need to have a default value
 	protected array $input = [];
-	
+
 	// Pre-Search Objects
 	private array $preSearch;
 	public $cat = null;
 	public $city = null;
 	public $admin = null;
-	
+
 	// Default Columns Selected
 	protected $select = [];
 	protected $groupBy = [];
 	protected $having = [];
 	protected $orderBy = [];
-	
+
 	protected $posts;
 	protected string $postsTable;
-	
+
 	// 'queryStringKey' => ['name' => 'column', 'order' => 'direction']
 	public array $orderByParametersFields = [];
-	
+
 	private array $webGlobalQueries = ['countryCode', 'languageCode'];
 	private array $webQueriesPerController = [
 		'CategoryController' => ['op', 'c', 'sc'],
@@ -72,39 +72,39 @@ class PostQueries
 		'SearchController'   => ['op'],
 		'PostsController'    => ['op'], // Account\
 	];
-	
+
 	/**
 	 * PostQueries constructor.
 	 *
 	 * @param array $input
 	 * @param array $preSearch
 	 */
-	public function __construct(array $input = [], array $preSearch = [])
+	public function __construct(array $input = [], array $preSearch = [], array $hidden = [])
 	{
 		self::$dbModeStrict = config('database.connections.' . config('database.default') . '.strict');
-		
+
 		// Input
 		$this->input = $this->bindValidValuesForInput($input);
-		
+
 		// Pre-Search (category, city or admin. division)
 		$this->cat = !empty($preSearch['cat']) ? $preSearch['cat'] : null;
 		$this->city = !empty($preSearch['city']) ? $preSearch['city'] : null;
 		$this->admin = !empty($preSearch['admin']) ? $preSearch['admin'] : null;
-		
+
 		// Save preSearch
 		$this->preSearch = $preSearch;
-		
+
 		// Init. Builder
 		$this->posts = Post::query();
 		$this->postsTable = (new Post())->getTable();
-		
+
 		// Add Default Select Columns
-		$this->setSelect();
-		
+		$this->setSelect($hidden);
+
 		// Relations
 		$this->setRelations();
 	}
-	
+
 	/**
 	 * Get the results
 	 *
@@ -117,28 +117,28 @@ class PostQueries
 	{
 		// Apply Requested Filters
 		$this->applyFilters();
-		
+
 		// Apply Aggregation & Reorder Statements
 		$this->applyGroupBy();
 		$this->applyHaving();
 		$this->applyOrderBy();
-		
+
 		// Get Count PostTypes Results
 		$count = (config('settings.single.show_listing_types'))
 			? $this->countFetch()
 			: [];
-		
+
 		// Get Results
 		$perPage = data_get($this->input, 'perPage');
 		$posts = $this->posts->paginate((int)$perPage);
-		
+
 		// Remove Distance from Request
 		$this->removeDistanceFromRequest();
-		
+
 		// If the request is made from the app's Web environment,
 		// use the Web URL as the pagination's base URL
 		$posts = setPaginationBaseUrl($posts);
-		
+
 		// Add eventual web queries to $queriesToRemove
 		$queriesToRemove = array_merge($queriesToRemove, $this->webGlobalQueries);
 		$webController = null;
@@ -149,14 +149,14 @@ class PostQueries
 			$webQueries = $this->webQueriesPerController[$webController] ?? [];
 			$queriesToRemove = array_merge($queriesToRemove, $webQueries);
 		}
-		
+
 		// Append request queries in the pagination links
 		$query = !empty($queriesToRemove)
 			? request()->except($queriesToRemove)
 			: request()->query();
 		$query = collect($query)->map(fn($item) => is_null($item) ? '' : $item)->toArray();
 		$posts->appends($query);
-		
+
 		// Get Count Results
 		$count[0] = $posts->total();
 		if (config('settings.single.show_listing_types')) {
@@ -172,25 +172,25 @@ class PostQueries
 				$count[0] = $total;
 			}
 		}
-		
+
 		// Wrap the listings for API calls
 		$postsCollection = new EntityCollection('PostController', $posts);
 		$message = ($posts->count() <= 0) ? t('no_posts_found') : null;
 		$postsResult = $postsCollection->toResponse(request())->getData(true);
-		
+
 		// Add 'user' object in preSearch (If available)
 		$this->preSearch['user'] = null;
 		$searchBasedOnUser = (request()->filled('userId') || request()->filled('username'));
 		if ($searchBasedOnUser) {
 			$this->preSearch['user'] = data_get($postsResult, 'data.0.user');
 		}
-		
+
 		$this->preSearch['distance'] = [
 			'default' => self::$defaultDistance,
 			'current' => self::$distance,
 			'max'     => self::$maxDistance,
 		];
-		
+
 		// Results Data
 		$data = [
 			'message'   => $message,
@@ -199,14 +199,14 @@ class PostQueries
 			'distance'  => self::$distance,
 			'preSearch' => $this->preSearch,
 		];
-		
+
 		if (config('settings.list.show_listings_tags')) {
 			$data['tags'] = $this->getPostsTags($posts);
 		}
-		
+
 		return $data;
 	}
-	
+
 	/**
 	 * Count the results
 	 *
@@ -215,27 +215,27 @@ class PostQueries
 	private function countFetch(): array
 	{
 		$count = [];
-		
+
 		$postTypes = PostType::query();
 		if ($postTypes->count() <= 0) {
 			return $count;
 		}
-		
+
 		// Count entries by post type
 		$postTypes = $postTypes->orderBy('name')->get();
 		$pattern = '/`post_type_id`\s*=\s*[\d\']+\s+/ui';
 		foreach ($postTypes as $postType) {
 			$iPosts = clone $this->posts;
-			
+
 			$sql = DBTool::getRealSql($iPosts->toSql(), $iPosts->getBindings());
-			
+
 			if (preg_match($pattern, $sql)) {
 				$sql = preg_replace($pattern, '`post_type_id` = ' . $postType->id . ' ', $sql);
 			} else {
 				$iPosts->where('post_type_id', $postType->id);
 				$sql = DBTool::getRealSql($iPosts->toSql(), $iPosts->getBindings());
 			}
-			
+
 			try {
 				$sql = 'SELECT COUNT(*) AS total FROM (' . $sql . ') AS x';
 				$result = DB::select($sql);
@@ -243,13 +243,13 @@ class PostQueries
 				// dd($e->getMessage()); // Debug!
 				$result = null;
 			}
-			
+
 			$count[$postType->id] = (isset($result[0])) ? (int)$result[0]->total : 0;
 		}
-		
+
 		return $count;
 	}
-	
+
 	/**
 	 * Get found listings' tags (per page)
 	 *
@@ -267,10 +267,10 @@ class PostQueries
 			}
 			$tags = tagCleaner($tags);
 		}
-		
+
 		return $tags;
 	}
-	
+
 	/**
 	 * Bind valid values for the input's elements
 	 *
@@ -285,10 +285,10 @@ class PostQueries
 		if (!$cacheExpirationIsValid) {
 			$array['cacheExpiration'] = self::$cacheExpiration;
 		}
-		
+
 		// op
 		$array['op'] = data_get($array, 'op', 'default');
-		
+
 		// perPage
 		$perPage = data_get($array, 'perPage');
 		$perPageIsValid = !empty($perPage) && is_numeric($perPage);
@@ -297,12 +297,12 @@ class PostQueries
 			$perPageIsBelongValidRange = is_numeric($perPage) && ($perPage > 1 && $perPage <= 50);
 			$array['perPage'] = $perPageIsBelongValidRange ? $perPage : 12;
 		}
-		
+
 		// orderBy
 		// Avoid to set an arbitrary orderBy value (set value to null instead)
 		// $orderBy = data_get($array, 'orderBy');
 		// $array['orderBy'] = !empty($orderBy) ? $orderBy : null;
-		
+
 		return $array;
 	}
 }
