@@ -17,10 +17,7 @@
 namespace App\Http\Controllers\Api\Post;
 
 use App\Helpers\Search\PostQueries;
-use App\Helpers\Search\Traits\Filters;
-use App\Helpers\Search\Traits\GroupBy;
-use App\Helpers\Search\Traits\Having;
-use App\Helpers\Search\Traits\OrderBy;
+use App\Helpers\Search\PostSuggestionQueries;
 use App\Http\Controllers\Api\Post\Search\CategoryTrait;
 use App\Http\Controllers\Api\Post\Search\LocationTrait;
 use App\Http\Controllers\Api\Post\Search\SidebarTrait;
@@ -34,12 +31,12 @@ use Larapen\LaravelDistance\Libraries\mysql\DistanceHelper;
 
 trait SearchTrait
 {
-	use CategoryTrait, LocationTrait, SidebarTrait, Filters, GroupBy, Having, OrderBy;
+	use CategoryTrait, LocationTrait, SidebarTrait;
 
 	/**
 	 * @return \Illuminate\Http\JsonResponse
 	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterfac
+	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function getPosts(): \Illuminate\Http\JsonResponse
 	{
@@ -236,39 +233,16 @@ trait SearchTrait
 		];
 		$hidden = ['description', 'email_verified_at', 'phone_verified_at', 'email_token', 'phone_token'];
 
-		//$searchData = $this->searchPosts($input, $preSearch, $fields,$hidden);
-		//$preSearch = $searchData['preSearch'] ?? $preSearch;
+		$searchData = $this->suggestPosts($input, $preSearch, $fields, $hidden);
+		$preSearch = $searchData['preSearch'] ?? $preSearch;
 
-		/*$data = [
+		$data = [
 			'success' => true,
-			'message' => $searchData['message'] ?? null, 
+			'message' => $searchData['message'] ?? null,
 			'result'  => $searchData['posts'],
 			'extra'   => [
 				'count'     => $searchData['count'] ?? [],
 			],
-		];*/
-
-		$countryCode = request()->get('country_code', config('country.code'));
-
-		$this->posts = Post::query();
-		$this->applyFilters();
-		$this->applyGroupBy();
-		$this->applyHaving();
-		$this->applyOrderBy();
-
-		$posts = $this->posts->paginate($this->perPage);
-
-		// If the request is made from the app's Web environment,
-		// use the Web URL as the pagination's base URL
-		$posts = setPaginationBaseUrl($posts);
-
-		$resourceCollection = new EntityCollection(class_basename($this), $posts);
-		$message = ($posts->count() <= 0) ? t('no_posts_found') : null;
-		$resourceCollection = $this->respondWithCollection($resourceCollection, $message);
-
-		$data = json_decode($resourceCollection->content(), true);
-		$data['extra'] = [
-			'count'     => $count ?? null
 		];
 
 		return $this->apiResponse($data);
@@ -301,6 +275,32 @@ trait SearchTrait
 		return (new PostQueries($input, $preSearch, $hidden))->fetch($queriesToRemove);
 	}
 
+	/**
+	 * @param $input
+	 * @param $preSearch
+	 * @param $fields
+	 * @return array
+	 * @throws \Psr\Container\ContainerExceptionInterface
+	 * @throws \Psr\Container\NotFoundExceptionInterface
+	 */
+	protected function suggestPosts($input, &$preSearch, &$fields, $hidden = []): array
+	{
+		//$location = $this->getLocation();
+
+		$preSearch = [
+			'cat'   => $this->getCategory(),
+			'city'  => $location['city'] ?? null,
+			'admin' => $location['admin'] ?? null,
+		];
+
+		if (!empty($preSearch['cat'])) {
+			$fields = CategoryField::getFields($preSearch['cat']->id);
+		}
+
+		$queriesToRemove = ['op', 'embed'];
+
+		return (new PostSuggestionQueries($input, $preSearch, $hidden))->fetch($queriesToRemove);
+	}
 	/**
 	 * @param int|null $postId
 	 * @param int|null $distance
