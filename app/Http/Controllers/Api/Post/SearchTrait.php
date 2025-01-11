@@ -18,6 +18,9 @@ namespace App\Http\Controllers\Api\Post;
 
 use App\Helpers\Search\PostQueries;
 use App\Helpers\Search\Traits\Filters;
+use App\Helpers\Search\Traits\GroupBy;
+use App\Helpers\Search\Traits\Having;
+use App\Helpers\Search\Traits\OrderBy;
 use App\Http\Controllers\Api\Post\Search\CategoryTrait;
 use App\Http\Controllers\Api\Post\Search\LocationTrait;
 use App\Http\Controllers\Api\Post\Search\SidebarTrait;
@@ -31,12 +34,12 @@ use Larapen\LaravelDistance\Libraries\mysql\DistanceHelper;
 
 trait SearchTrait
 {
-	use CategoryTrait, LocationTrait, SidebarTrait,Filters;
+	use CategoryTrait, LocationTrait, SidebarTrait, Filters, GroupBy, Having, OrderBy;
 
 	/**
 	 * @return \Illuminate\Http\JsonResponse
 	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
+	 * @throws \Psr\Container\NotFoundExceptionInterfac
 	 */
 	public function getPosts(): \Illuminate\Http\JsonResponse
 	{
@@ -231,7 +234,7 @@ trait SearchTrait
 			'perPage' => request()->get('perPage'),
 			'orderBy' => $orderBy,
 		];
-		$hidden = ['description','email_verified_at','phone_verified_at','email_token','phone_token'];
+		$hidden = ['description', 'email_verified_at', 'phone_verified_at', 'email_token', 'phone_token'];
 
 		//$searchData = $this->searchPosts($input, $preSearch, $fields,$hidden);
 		//$preSearch = $searchData['preSearch'] ?? $preSearch;
@@ -252,7 +255,7 @@ trait SearchTrait
 		$this->applyGroupBy();
 		$this->applyHaving();
 		$this->applyOrderBy();
-		
+
 		$posts = $this->posts->paginate($this->perPage);
 
 		// If the request is made from the app's Web environment,
