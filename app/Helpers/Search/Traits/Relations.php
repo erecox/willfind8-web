@@ -54,4 +54,19 @@ trait Relations
 		// savedByLoggedUser
 		$this->posts->with('savedByLoggedUser');
 	}
+
+	protected function setSuggestionRelations(): void
+	{
+		if (!isset($this->posts)) {
+			abort(500, 'Fatal Error: Search suggestion relations cannot be applied.');
+		}
+		// category
+		$this->setCategoryRelation();
+		
+		// latestPayment
+		$this->setPaymentRelation();
+		
+		// city
+		$this->posts->with('city')->has('city');
+	}
 }
