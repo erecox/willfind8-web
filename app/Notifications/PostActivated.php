@@ -23,58 +23,43 @@ use Illuminate\Notifications\Messages\VonageMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Models\Post;
+use ExpoSDK\ExpoMessage;
 use NotificationChannels\Twilio\TwilioChannel;
 use NotificationChannels\Twilio\TwilioSmsMessage;
 
 class PostActivated extends Notification implements ShouldQueue
 {
 	use Queueable;
-	
+
 	protected $post;
-	
+
 	public function __construct(Post $post)
 	{
 		$this->post = $post;
 	}
-	
+
 	public function via($notifiable)
 	{
+		$via = ['expo'];
+
 		// Is email can be sent?
 		$emailNotificationCanBeSent = (
 			config('settings.mail.confirmation') == '1'
 			&& !empty($this->post->email)
 			&& !empty($this->post->email_verified_at)
 		);
-		
-		// Is SMS can be sent in addition?
-		$smsNotificationCanBeSent = (
-			config('settings.sms.enable_phone_as_auth_field') == '1'
-			&& config('settings.sms.confirmation') == '1'
-			&& $this->post->auth_field == 'phone'
-			&& !empty($this->post->phone)
-			&& !empty($this->post->phone_verified_at)
-			&& !isDemoDomain()
-		);
-		
+
 		if ($emailNotificationCanBeSent) {
-			return ['mail'];
+			$via[] = 'mail';
 		}
-		
-		if ($smsNotificationCanBeSent) {
-			if (config('settings.sms.driver') == 'twilio') {
-				return [TwilioChannel::class];
-			}
-			
-			return ['vonage'];
-		}
-		
-		return [];
+
+		return $via;
 	}
-	
+
 	public function toMail($notifiable)
 	{
 		$postUrl = UrlGen::post($this->post);
-		
+
 		return (new MailMessage)
 			->subject(trans('mail.post_activated_title', ['title' => str($this->post->title)->limit(50)]))
 			->greeting(trans('mail.post_activated_content_1'))
@@ -86,19 +71,37 @@ class PostActivated extends Notification implements ShouldQueue
 			->line(trans('mail.post_activated_content_4', ['appName' => config('app.name')]))
 			->salutation(trans('mail.footer_salutation', ['appName' => config('app.name')]));
 	}
-	
+
 	public function toVonage($notifiable)
 	{
 		return (new VonageMessage())->content($this->smsMessage())->unicode();
 	}
-	
+
 	public function toTwilio($notifiable)
 	{
 		return (new TwilioSmsMessage())->content($this->smsMessage());
 	}
-	
+
+	public function toExpo($notifiable)
+	{
+		return new ExpoMessage($this->expoMessage($notifiable));
+	}
+
 	protected function smsMessage()
 	{
 		return trans('sms.post_activated_content', ['appName' => config('app.name'), 'title' => $this->post->title]);
+	}
+
+	protected function expoMessage($notifiable)
+	{
+		$badge = $notifiable->unreadNotifications->count();
+
+		return [
+			'title'	=> $this->post->title,
+			'body' => "'Your listing {$this->post->title} has been activated",
+			'sound' => 'default',
+			'data' => ['post' => $this->post, 'type' => 'post_notification'],
+			'badge' => $badge + 1,
+		];
 	}
 }

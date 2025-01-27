@@ -20,7 +20,6 @@
         
         <div class="logo">
             <h3 class="box-title mb-3">{{ trans('admin.login') }}</h3>
-            <?=password_hash('K3565@2024',PASSWORD_DEFAULT)  ?>
         </div>
         
         <div class="row">

@@ -1,0 +1,1 @@
+{"version":1,"defects":{"Tests\\Unit\\ExpoNotificationChannelTest::test_send_notification":8},"times":{"HelloWorldTest::testHelloWorld":0.007,"Tests\\Unit\\ExpoNotificationChannelTest::test_send_notification":0.171}}

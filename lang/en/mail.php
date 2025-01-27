@@ -45,7 +45,7 @@ return [
 	'post_activated_title'             => 'Your listing has been activated',
 	'post_activated_content_1'         => 'Hello,',
 	'post_activated_content_2'         => 'Your listing <a href=":postUrl">:title</a> has been activated.',
-	'post_activated_content_3'         => 'It will soon be examined by one of our administrators for its publication on line.',
+	'post_activated_content_3'         => 'It will soon be examined by one of our administrators for its publication online.',
 	'post_activated_content_4'         => 'You\'re receiving this email because you recently created a new listing on :appName. If this wasn\'t you, please ignore this email.',
 	
 	

@@ -34,14 +34,14 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends BaseUser
 {
 	use Crud, HasRoles, CountryTrait, HasApiTokens, Notifiable, HasFactory;
-	
+
 	/**
 	 * The table associated with the model.
 	 *
 	 * @var string
 	 */
 	protected $table = 'users';
-	
+
 	/**
 	 * The primary key for the model.
 	 *
@@ -57,21 +57,21 @@ class User extends BaseUser
 		'p_is_online',
 		'country_flag_url',
 	];
-	
+
 	/**
 	 * Indicates if the model should be timestamped.
 	 *
 	 * @var boolean
 	 */
 	public $timestamps = true;
-	
+
 	/**
 	 * The attributes that aren't mass assignable.
 	 *
 	 * @var array
 	 */
 	protected $guarded = ['id'];
-	
+
 	/**
 	 * The attributes that are mass assignable.
 	 *
@@ -110,14 +110,14 @@ class User extends BaseUser
 		'closed',
 		'last_activity',
 	];
-	
+
 	/**
 	 * The attributes that should be hidden for arrays
 	 *
 	 * @var array
 	 */
 	protected $hidden = ['password', 'remember_token'];
-	
+
 	/**
 	 * The attributes that should be cast to native types.
 	 *
@@ -131,7 +131,7 @@ class User extends BaseUser
 		'last_login_at'     => 'datetime',
 		'deleted_at'        => 'datetime',
 	];
-	
+
 	/**
 	 * User constructor.
 	 *
@@ -145,10 +145,10 @@ class User extends BaseUser
 		) {
 			$this->fillable[] = 'is_admin';
 		}
-		
+
 		parent::__construct($attributes);
 	}
-	
+
 	/*
 	|--------------------------------------------------------------------------
 	| FUNCTIONS
@@ -157,31 +157,43 @@ class User extends BaseUser
 	protected static function boot()
 	{
 		parent::boot();
-		
+
 		User::observe(UserObserver::class);
-		
+
 		static::addGlobalScope(new LocalizedScope());
 	}
-	
+
 	public function routeNotificationForMail()
 	{
 		return $this->email;
 	}
-	
+
 	public function routeNotificationForVonage()
 	{
 		$phone = phoneE164($this->phone, $this->phone_country);
-		
+
 		return setPhoneSign($phone, 'vonage');
 	}
-	
+
 	public function routeNotificationForTwilio()
 	{
 		$phone = phoneE164($this->phone, $this->phone_country);
-		
+
 		return setPhoneSign($phone, 'twilio');
 	}
-	
+
+	public function routeNotificationForSmsOnline()
+	{
+		$phone = phoneE164($this->phone, $this->phone_country);
+
+		return setPhoneSign($phone, 'smsonline');
+	}
+
+	public function routeNotificationForExpo()
+	{
+		return $this->hasMany(ExpoDevice::class)->get()->pluck('token')->toArray();
+	}
+
 	/**
 	 * Send the password reset notification.
 	 * Note: Overrides the Laravel official version
@@ -197,7 +209,7 @@ class User extends BaseUser
 		$authField = (empty($authField) && request()->filled('email')) ? 'email' : $authField;
 		$authField = (empty($authField) && request()->filled('phone')) ? 'phone' : $authField;
 		$authField = (empty($authField)) ? getAuthField() : $authField;
-		
+
 		// Send the reset password notification
 		try {
 			$this->notify(new ResetPasswordNotification($this, $token, $authField));
@@ -209,7 +221,7 @@ class User extends BaseUser
 			}
 		}
 	}
-	
+
 	/**
 	 * Get the user's preferred locale.
 	 *
@@ -219,7 +231,7 @@ class User extends BaseUser
 	{
 		return $this->language_code;
 	}
-	
+
 	public function canImpersonate(): bool
 	{
 		// Cannot impersonate from Demo website,
@@ -227,10 +239,10 @@ class User extends BaseUser
 		if (isDemoDomain() || !$this->can(Permission::getStaffPermissions())) {
 			return false;
 		}
-		
+
 		return true;
 	}
-	
+
 	public function canBeImpersonated(): bool
 	{
 		// Cannot be impersonated from Demo website,
@@ -239,14 +251,14 @@ class User extends BaseUser
 		if (isDemoDomain() || $this->can(Permission::getStaffPermissions()) || $this->can_be_impersonated != 1) {
 			return false;
 		}
-		
+
 		return true;
 	}
-	
+
 	public function getEmailHtml()
 	{
 		$out = '';
-		
+
 		$email = (isset($this->email) && !empty($this->email)) ? $this->email : null;
 		if (!empty($email)) {
 			$out .= $email;
@@ -254,7 +266,7 @@ class User extends BaseUser
 			$out .= '-';
 		}
 		$out = '<span class="float-start">' . $out . '</span>';
-		
+
 		$authField = (isset($this->auth_field) && !empty($this->auth_field)) ? $this->auth_field : getAuthField();
 		if ($authField == 'email') {
 			$infoIcon = t('notifications_channel') . ' (' . trans('settings.mail') . ')';
@@ -262,24 +274,24 @@ class User extends BaseUser
 			$out .= ' <i class="bi bi-bell" data-bs-toggle="tooltip" title="' . $infoIcon . '"></i>';
 			$out .= '</div>';
 		}
-		
+
 		return $out;
 	}
-	
+
 	public function getPhoneHtml()
 	{
 		$out = '';
-		
+
 		$countryCode = $this->country_code ?? null;
 		$countryName = $countryCode;
 		if (!empty($this->country)) {
 			$countryCode = $this->country->code ?? $this->country_code;
 			$countryName = $this->country->name ?? $countryCode;
 		}
-		
+
 		$phoneCountry = $this->phone_country ?? $countryCode;
 		$phone = (isset($this->phone) && !empty($this->phone)) ? $this->phone : null;
-		
+
 		$iconPath = 'images/flags/16/' . strtolower($phoneCountry) . '.png';
 		if (file_exists(public_path($iconPath))) {
 			if (!empty($phone)) {
@@ -293,7 +305,7 @@ class User extends BaseUser
 			$out .= $phone ?? '-';
 		}
 		$out = '<span class="float-start">' . $out . '</span>';
-		
+
 		$authField = (isset($this->auth_field) && !empty($this->auth_field)) ? $this->auth_field : getAuthField();
 		if ($authField == 'phone') {
 			$infoIcon = t('notifications_channel') . ' (' . trans('settings.sms') . ')';
@@ -301,26 +313,26 @@ class User extends BaseUser
 			$out .= ' <i class="bi bi-bell" data-bs-toggle="tooltip" title="' . $infoIcon . '"></i>';
 			$out .= '</div>';
 		}
-		
+
 		return $out;
 	}
-	
+
 	public function impersonateBtn($xPanel = false): string
 	{
 		$out = '';
-		
+
 		// Get all the User's attributes
 		$user = self::findOrFail($this->getKey());
-		
+
 		// Get impersonate URL
 		$impersonateUrl = dmUrl($this->country_code, 'impersonate/take/' . $this->getKey(), false, false);
-		
+
 		// If the Domain Mapping plugin is installed,
 		// Then, the impersonate feature need to be disabled
 		if (config('plugins.domainmapping.installed')) {
 			return $out;
 		}
-		
+
 		// Generate the impersonate link
 		if ($user->getKey() == auth()->user()->getAuthIdentifier()) {
 			$tooltip = '" data-bs-toggle="tooltip" title="' . t('Cannot impersonate yourself') . '"';
@@ -335,14 +347,14 @@ class User extends BaseUser
 			$tooltip = '" data-bs-toggle="tooltip" title="' . t('Impersonate this user') . '"';
 			$out .= '<a class="btn btn-xs btn-light" href="' . $impersonateUrl . '" ' . $tooltip . '><i class="fas fa-sign-in-alt"></i></a>';
 		}
-		
+
 		return $out;
 	}
-	
+
 	public function deleteBtn($xPanel = false): string
 	{
 		$out = '';
-		
+
 		if (auth()->check()) {
 			if ($this->id == auth()->user()->id) {
 				return $out;
@@ -351,25 +363,25 @@ class User extends BaseUser
 				return $out;
 			}
 		}
-		
+
 		$url = admin_url('users/' . $this->id);
-		
+
 		$out .= '<a href="' . $url . '" class="btn btn-xs btn-danger" data-button-type="delete">';
 		$out .= '<i class="far fa-trash-alt"></i> ';
 		$out .= trans('admin.delete');
 		$out .= '</a>';
-		
+
 		return $out;
 	}
-	
+
 	public function isOnline(): bool
 	{
 		$isOnline = ($this->last_activity > Carbon::now(Date::getAppTimeZone())->subMinutes(5));
-		
+
 		// Allow only logged users to get the other users status
 		return auth()->check() ? $isOnline : false;
 	}
-	
+
 	/*
 	|--------------------------------------------------------------------------
 	| RELATIONS
@@ -379,12 +391,29 @@ class User extends BaseUser
 	{
 		return $this->hasMany(Post::class, 'user_id')->orderByDesc('created_at');
 	}
-	
+
+	// Relationship to Device
+	public function devices()
+	{
+		return $this->hasMany(ExpoDevice::class);
+	}
+
+	public function notifications()
+	{
+		return $this->hasMany(ExpoNotification::class);
+	}
+
+	public function unreadNotifications()
+	{
+		return $this->hasMany(ExpoNotification::class)->where('status', 'delivered');
+
+	}
+
 	public function gender()
 	{
 		return $this->belongsTo(Gender::class, 'gender_id', 'id');
 	}
-	
+
 	public function receivedThreads()
 	{
 		return $this->hasManyThrough(
@@ -396,7 +425,7 @@ class User extends BaseUser
 			'id'       // Local key on the Listing table...
 		);
 	}
-	
+
 	public function threads()
 	{
 		return $this->hasManyThrough(
@@ -408,22 +437,22 @@ class User extends BaseUser
 			'id'       // Local key on the ThreadMessage table...
 		);
 	}
-	
+
 	public function savedPosts()
 	{
 		return $this->belongsToMany(Post::class, 'saved_posts', 'user_id', 'post_id');
 	}
-	
+
 	public function savedSearch()
 	{
 		return $this->hasMany(SavedSearch::class, 'user_id');
 	}
-	
+
 	public function userType()
 	{
 		return $this->belongsTo(UserType::class, 'user_type_id');
 	}
-	
+
 	/*
 	|--------------------------------------------------------------------------
 	| SCOPES
@@ -434,19 +463,19 @@ class User extends BaseUser
 		$builder->where(function ($query) {
 			$query->whereNotNull('email_verified_at')->whereNotNull('phone_verified_at');
 		});
-		
+
 		return $builder;
 	}
-	
+
 	public function scopeUnverified($builder)
 	{
 		$builder->where(function ($query) {
 			$query->whereNull('email_verified_at')->orWhereNull('phone_verified_at');
 		});
-		
+
 		return $builder;
 	}
-	
+
 	/*
 	|--------------------------------------------------------------------------
 	| ACCESSORS | MUTATORS
@@ -458,24 +487,24 @@ class User extends BaseUser
 			get: function ($value) {
 				$value = new Carbon($value);
 				$value->timezone(Date::getAppTimeZone());
-				
+
 				return $value;
 			},
 		);
 	}
-	
+
 	protected function updatedAt(): Attribute
 	{
 		return Attribute::make(
 			get: function ($value) {
 				$value = new Carbon($value);
 				$value->timezone(Date::getAppTimeZone());
-				
+
 				return $value;
 			},
 		);
 	}
-	
+
 	protected function originalUpdatedAt(): Attribute
 	{
 		return Attribute::make(
@@ -484,19 +513,19 @@ class User extends BaseUser
 			},
 		);
 	}
-	
+
 	protected function lastActivity(): Attribute
 	{
 		return Attribute::make(
 			get: function ($value) {
 				$value = new Carbon($value);
 				$value->timezone(Date::getAppTimeZone());
-				
+
 				return $value;
 			},
 		);
 	}
-	
+
 	protected function originalLastActivity(): Attribute
 	{
 		return Attribute::make(
@@ -505,31 +534,31 @@ class User extends BaseUser
 			},
 		);
 	}
-	
+
 	protected function lastLoginAt(): Attribute
 	{
 		return Attribute::make(
 			get: function ($value) {
 				$value = new Carbon($value);
 				$value->timezone(Date::getAppTimeZone());
-				
+
 				return $value;
 			},
 		);
 	}
-	
+
 	protected function deletedAt(): Attribute
 	{
 		return Attribute::make(
 			get: function ($value) {
 				$value = new Carbon($value);
 				$value->timezone(Date::getAppTimeZone());
-				
+
 				return $value;
 			},
 		);
 	}
-	
+
 	protected function createdAtFormatted(): Attribute
 	{
 		return Attribute::make(
@@ -538,22 +567,22 @@ class User extends BaseUser
 				if (empty($createdAt)) {
 					return null;
 				}
-				
+
 				$value = new Carbon($createdAt);
 				$value->timezone(Date::getAppTimeZone());
-				
+
 				return Date::formatFormNow($value);
 			},
 		);
 	}
-	
+
 	protected function photoUrl(): Attribute
 	{
 		return Attribute::make(
 			get: function ($value) {
 				// Default Photo
 				$defaultPhotoUrl = imgUrl(config('larapen.core.avatar.default'));
-				
+
 				// Photo from User's account
 				$userPhotoUrl = null;
 				if (isset($this->photo) && !empty($this->photo)) {
@@ -562,12 +591,12 @@ class User extends BaseUser
 						$userPhotoUrl = imgUrl($this->photo, 'user');
 					}
 				}
-				
+
 				return !empty($userPhotoUrl) ? $userPhotoUrl : $defaultPhotoUrl;
 			},
 		);
 	}
-	
+
 	protected function email(): Attribute
 	{
 		return Attribute::make(
@@ -589,23 +618,23 @@ class User extends BaseUser
 						}
 					}
 				}
-				
+
 				return $value;
 			},
 		);
 	}
-	
+
 	protected function phoneCountry(): Attribute
 	{
 		return Attribute::make(
 			get: function ($value) {
 				$countryCode = $this->country_code ?? config('country.code');
-				
+
 				return !empty($value) ? $value : $countryCode;
 			},
 		);
 	}
-	
+
 	protected function phone(): Attribute
 	{
 		return Attribute::make(
@@ -614,18 +643,18 @@ class User extends BaseUser
 			},
 		);
 	}
-	
+
 	protected function phoneNational(): Attribute
 	{
 		return Attribute::make(
 			get: function ($value) {
 				$value = !empty($value) ? $value : $this->phone;
-				
+
 				return phoneNational($value, $this->phone_country);
 			},
 		);
 	}
-	
+
 	protected function phoneIntl(): Attribute
 	{
 		return Attribute::make(
@@ -633,23 +662,23 @@ class User extends BaseUser
 				$value = (isset($this->phone_national) && !empty($this->phone_national))
 					? $this->phone_national
 					: $this->phone;
-				
+
 				if ($this->phone_country == config('country.code')) {
 					return phoneNational($value, $this->phone_country);
 				}
-				
+
 				return phoneIntl($value, $this->phone_country);
 			},
 		);
 	}
-	
+
 	protected function name(): Attribute
 	{
 		return Attribute::make(
 			get: fn($value) => mb_ucwords($value),
 		);
 	}
-	
+
 	protected function photo(): Attribute
 	{
 		return Attribute::make(
@@ -657,16 +686,16 @@ class User extends BaseUser
 				if (!is_string($value)) {
 					return $value;
 				}
-				
+
 				if ($value == url('/')) {
 					return null;
 				}
-				
+
 				// Retrieve current value without upload a new file
 				if (str_starts_with($value, config('larapen.core.picture.default'))) {
 					return null;
 				}
-				
+
 				if (!str_starts_with($value, 'avatars/')) {
 					if (empty($attributes['id']) || empty($attributes['country_code'])) {
 						return null;
@@ -674,12 +703,12 @@ class User extends BaseUser
 					$destPath = 'avatars/' . strtolower($attributes['country_code']) . '/' . $attributes['id'];
 					$value = $destPath . last(explode($destPath, $value));
 				}
-				
+
 				return $value;
 			},
 		);
 	}
-	
+
 	protected function pIsOnline(): Attribute
 	{
 		return Attribute::make(
@@ -689,30 +718,30 @@ class User extends BaseUser
 					!empty($this->getRawOriginal('last_activity'))
 					&& $this->last_activity->gt($timeAgoFromNow)
 				);
-				
+
 				// Allow only logged users to get the other users status
 				$guard = isFromApi() ? 'sanctum' : null;
 				return auth($guard)->check() ? $isOnline : false;
 			},
 		);
 	}
-	
+
 	protected function countryFlagUrl(): Attribute
 	{
 		return Attribute::make(
 			get: function ($value) {
 				$flagUrl = null;
-				
+
 				$flagPath = 'images/flags/16/' . strtolower($this->country_code) . '.png';
 				if (file_exists(public_path($flagPath))) {
 					$flagUrl = url($flagPath);
 				}
-				
+
 				return $flagUrl;
 			},
 		);
 	}
-	
+
 	/*
 	|--------------------------------------------------------------------------
 	| OTHER PRIVATE METHODS

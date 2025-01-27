@@ -30,6 +30,7 @@
 		"aws/aws-sdk-php": "~3.0",
 		"chriskonnertz/open-graph": "~2",
 		"cocur/slugify": "^4.3",
+		"ctwillie/expo-server-sdk-php": "^2.1",
 		"cviebrock/eloquent-sluggable": "^10.0",
 		"doctrine/dbal": "^3.6",
 		"fakerphp/faker": "^1.21.0",

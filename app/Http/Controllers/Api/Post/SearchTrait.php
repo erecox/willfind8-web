@@ -42,10 +42,10 @@ trait SearchTrait
 	{
 
 		// Create the MySQL Distance Calculation function, If it doesn't exist
-		$distanceCalculationFormula = config('settings.list.distance_calculation_formula', 'haversine');
-		if (!DistanceHelper::checkIfDistanceCalculationFunctionExists($distanceCalculationFormula)) {
-			DistanceHelper::createDistanceCalculationFunction($distanceCalculationFormula);
-		}
+		//$distanceCalculationFormula = config('settings.list.distance_calculation_formula', 'haversine');
+		//if (!DistanceHelper::checkIfDistanceCalculationFunctionExists($distanceCalculationFormula)) {
+		//	DistanceHelper::createDistanceCalculationFunction($distanceCalculationFormula);
+		//}
 
 		$preSearch = [];
 		$fields = collect();

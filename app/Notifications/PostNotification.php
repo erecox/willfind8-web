@@ -18,6 +18,7 @@ namespace App\Notifications;
 
 use App\Helpers\Date;
 use App\Helpers\UrlGen;
+use ExpoSDK\ExpoMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -37,7 +38,20 @@ class PostNotification extends Notification implements ShouldQueue
 	
 	public function via($notifiable)
 	{
-		return ['mail'];
+		$via = ['expo'];
+
+		// Is email can be sent?
+		$emailNotificationCanBeSent = (
+			config('settings.mail.confirmation') == '1'
+			&& !empty($this->post->email)
+			&& !empty($this->post->email_verified_at)
+		);
+
+		if ($emailNotificationCanBeSent) {
+			$via[] = 'mail';
+		}
+
+		return $via;
 	}
 	
 	public function toMail($notifiable)
@@ -55,5 +69,23 @@ class PostNotification extends Notification implements ShouldQueue
 				'time'    => Carbon::now(Date::getAppTimeZone())->format('H:i'),
 			]))
 			->salutation(trans('mail.footer_salutation', ['appName' => config('app.name')]));
+	}
+
+	public function toExpo($notifiable)
+	{
+		return new ExpoMessage($this->expoMessage($notifiable));
+	}
+	
+	protected function expoMessage($notifiable)
+	{
+		$badge = $notifiable->unreadNotifications->count();
+
+		return [
+			'title'	=> $this->post->title,
+			'body' => trans('mail.post_notification_content_2', ['advertiserName' => $this->post->contact_name]),
+			'sound' => 'default',
+			'data' => ['post'=>$this->post, 'type' => 'post_notification'],
+			'badge' => $badge + 1,
+		];
 	}
 }

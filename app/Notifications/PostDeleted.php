@@ -17,6 +17,7 @@
 namespace App\Notifications;
 
 use App\Helpers\Date;
+use ExpoSDK\ExpoMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Messages\VonageMessage;
@@ -39,31 +40,20 @@ class PostDeleted extends Notification implements ShouldQueue
 	
 	public function via($notifiable)
 	{
+		$via = ['expo'];
+
 		// Is email can be sent?
-		$emailNotificationCanBeSent = (config('settings.mail.confirmation') == '1' && !empty($this->post->email));
-		
-		// Is SMS can be sent in addition?
-		$smsNotificationCanBeSent = (
-			config('settings.sms.enable_phone_as_auth_field') == '1'
-			&& config('settings.sms.confirmation') == '1'
-			&& $this->post->auth_field == 'phone'
-			&& !empty($this->post->phone)
-			&& !isDemoDomain()
+		$emailNotificationCanBeSent = (
+			config('settings.mail.confirmation') == '1'
+			&& !empty($this->post->email)
+			&& !empty($this->post->email_verified_at)
 		);
-		
+
 		if ($emailNotificationCanBeSent) {
-			return ['mail'];
+			$via[] = 'mail';
 		}
-		
-		if ($smsNotificationCanBeSent) {
-			if (config('settings.sms.driver') == 'twilio') {
-				return [TwilioChannel::class];
-			}
-			
-			return ['vonage'];
-		}
-		
-		return [];
+
+		return $via;
 	}
 	
 	public function toMail($notifiable)
@@ -91,6 +81,24 @@ class PostDeleted extends Notification implements ShouldQueue
 	public function toTwilio($notifiable)
 	{
 		return (new TwilioSmsMessage())->content($this->smsMessage());
+	}
+
+	public function toExpo($notifiable)
+	{
+		return new ExpoMessage($this->expoMessage($notifiable));
+	}
+	
+	protected function expoMessage($notifiable)
+	{
+		$badge = $notifiable->unreadNotifications->count();
+
+		return [
+			'title'	=> $this->post->title,
+			'body' => "Your listing {$this->post->title} has been deleted",
+			'sound' => 'default',
+			'data' => [],
+			'badge' => $badge + 1,
+		];
 	}
 	
 	protected function smsMessage()

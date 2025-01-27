@@ -55,18 +55,18 @@ class PostController extends BaseController
 	use UpdateMultiStepsFormTrait;
 	use UpdateSingleStepFormTrait, SingleStepPicturesTrait;
 	use SingleStepPaymentTrait, MakePaymentTrait; // => StoreTrait & UpdateSingleStepFormTrait
-	
+
 	public function __construct()
 	{
 		parent::__construct();
-		
+
 		$this->middleware(function ($request, $next) {
 			//...
-			
+
 			return $next($request);
 		});
 	}
-	
+
 	/**
 	 * List listings
 	 *
@@ -88,7 +88,7 @@ class PostController extends BaseController
 	{
 		return $this->getPosts();
 	}
-	
+
 	/**
 	 * Get listing
 	 *
@@ -109,9 +109,9 @@ class PostController extends BaseController
 	public function show($id): \Illuminate\Http\JsonResponse
 	{
 		$isDetailed = (request()->filled('detailed') && request()->integer('detailed') == 1);
-		
+
 		if ($isDetailed) {
-			
+
 			$defaultEmbed = [
 				'user',
 				'category',
@@ -131,32 +131,31 @@ class PostController extends BaseController
 			} else {
 				request()->query->add(['embed' => implode(',', $defaultEmbed)]);
 			}
-			
+
 			return $this->showPost($id);
-			
 		} else {
 			$embed = explode(',', request()->get('embed'));
 			$countryCode = request()->get('countryCode');
 			$isUnactivatedIncluded = (request()->filled('unactivatedIncluded') && request()->integer('unactivatedIncluded') == 1);
 			$isBelongLoggedUser = (request()->filled('belongLoggedUser') && request()->integer('belongLoggedUser') == 1);
-			
+
 			// Cache control
 			$this->updateCachingParameters();
-			
+
 			// Cache ID
 			$cacheEmbedId = request()->filled('embed') ? '.embed.' . request()->get('embed') : '';
 			$cacheFiltersId = '.filters' . '.unactivatedIncluded:' . (int)$isUnactivatedIncluded . '.auth:' . (int)$isBelongLoggedUser;
 			$cacheId = 'post' . $cacheEmbedId . $cacheFiltersId . '.id:' . $id . '.' . config('app.locale');
 			$cacheId = md5($cacheId);
-			
+
 			// Cached Query
 			$post = cache()->remember($cacheId, $this->cacheExpiration, function () use ($countryCode, $isUnactivatedIncluded, $id, $embed, $isBelongLoggedUser) {
 				$post = Post::query();
-				
+
 				if ($isUnactivatedIncluded) {
 					$post->withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class]);
 				}
-				
+
 				if (in_array('country', $embed)) {
 					$post->with('country');
 				}
@@ -190,7 +189,7 @@ class PostController extends BaseController
 				if (in_array('pictures', $embed)) {
 					$post->with('pictures');
 				}
-				
+
 				if (!empty($countryCode)) {
 					$post->whereHas('country')->countryOf($countryCode);
 				}
@@ -198,25 +197,25 @@ class PostController extends BaseController
 					$userId = (auth('sanctum')->check()) ? auth('sanctum')->user()->getAuthIdentifier() : '-1';
 					$post->where('user_id', $userId);
 				}
-				
+
 				return $post->where('id', $id)->first();
 			});
-			
+
 			// Reset caching parameters
 			$this->resetCachingParameters();
-			
+
 			abort_if(empty($post), 404, t('post_not_found'));
-			
+
 			// Increment the Listing's visits counter
 			Event::dispatch(new PostWasVisited($post));
-			
+
 			$fieldsValues = [];
 			if (in_array('fieldsValues', $embed)) {
 				if (isset($post->category)) {
 					$fieldsValues = $this->getFieldsValues($post->category->id, $post->id);
 				}
 			}
-			
+
 			$data = [
 				'success' => true,
 				'result'  => new PostResource($post),
@@ -224,11 +223,11 @@ class PostController extends BaseController
 					'fieldsValues' => $fieldsValues,
 				],
 			];
-			
+
 			return $this->apiResponse($data);
 		}
 	}
-	
+
 	/**
 	 * Store listing
 	 *
@@ -271,10 +270,10 @@ class PostController extends BaseController
 	public function store(PostRequest $request)
 	{
 		$this->paymentSettings();
-		
+
 		return $this->storePost($request);
 	}
-	
+
 	/**
 	 * Update listing
 	 *
@@ -324,10 +323,10 @@ class PostController extends BaseController
 			$this->paymentSettings();
 			return $this->updateSingleStepForm($id, $request);
 		}
-		
+
 		return $this->updateMultiStepsForm($id, $request);
 	}
-	
+
 	/**
 	 * Delete listing(s)
 	 *
@@ -344,20 +343,20 @@ class PostController extends BaseController
 		if (!auth('sanctum')->check()) {
 			return $this->respondUnAuthorized();
 		}
-		
+
 		$user = auth('sanctum')->user();
-		
+
 		$data = [
 			'success' => false,
 			'message' => t('no_deletion_is_done'),
 			'result'  => null,
 		];
-		
+
 		$extra = [];
-		
+
 		// Get Entries ID (IDs separated by comma accepted)
 		$ids = explode(',', $ids);
-		
+
 		// Delete
 		$res = false;
 		foreach ($ids as $postId) {
@@ -366,43 +365,22 @@ class PostController extends BaseController
 				->where('user_id', $user->id)
 				->where('id', $postId)
 				->first();
-			
+
 			if (!empty($post)) {
 				$tmpPost = Arr::toObject($post->toArray());
-				
+
 				// Delete Entry
 				$res = $post->delete();
 				
-				// Send an Email or SMS confirmation
-				$emailNotificationCanBeSent = (config('settings.mail.confirmation') == '1' && !empty($tmpPost->email));
-				$smsNotificationCanBeSent = (
-					config('settings.sms.enable_phone_as_auth_field') == '1'
-					&& config('settings.sms.confirmation') == '1'
-					&& $tmpPost->auth_field == 'phone'
-					&& !empty($tmpPost->phone)
-					&& !isDemoDomain()
-				);
-				try {
-					if ($emailNotificationCanBeSent) {
-						Notification::route('mail', $tmpPost->email)->notify(new PostDeleted($tmpPost));
-					}
-					if ($smsNotificationCanBeSent) {
-						$smsChannel = (config('settings.sms.driver') == 'twilio')
-							? TwilioChannel::class
-							: 'vonage';
-						Notification::route($smsChannel, $tmpPost->phone)->notify(new PostDeleted($tmpPost));
-					}
-				} catch (\Throwable $e) {
-					$extra['mail']['success'] = false;
-					$extra['mail']['message'] = $e->getMessage();
-				}
+				// Send push notification 
+				Notification::send($user, new PostDeleted($tmpPost));
 			}
 		}
-		
+
 		// Confirmation
 		if ($res) {
 			$data['success'] = true;
-			
+
 			$count = count($ids);
 			if ($count > 1) {
 				$data['message'] = t('x entities have been deleted successfully', ['entities' => t('listings'), 'count' => $count]);
@@ -410,9 +388,9 @@ class PostController extends BaseController
 				$data['message'] = t('1 entity has been deleted successfully', ['entity' => t('listing')]);
 			}
 		}
-		
+
 		$data['extra'] = $extra;
-		
+
 		return $this->apiResponse($data);
 	}
 }

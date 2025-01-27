@@ -23,6 +23,7 @@ use Illuminate\Notifications\Messages\VonageMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Models\Post;
+use ExpoSDK\ExpoMessage;
 use Illuminate\Support\Carbon;
 use NotificationChannels\Twilio\TwilioChannel;
 use NotificationChannels\Twilio\TwilioSmsMessage;
@@ -30,57 +31,41 @@ use NotificationChannels\Twilio\TwilioSmsMessage;
 class PostArchived extends Notification implements ShouldQueue
 {
 	use Queueable;
-	
+
 	protected $post;
 	protected $archivedPostsExpiration;
-	
+
 	public function __construct(Post $post, $archivedPostsExpiration)
 	{
 		$this->post = $post;
 		$this->archivedPostsExpiration = $archivedPostsExpiration;
 	}
-	
+
 	public function via($notifiable)
 	{
+		$via = ['expo'];
+
 		// Is email can be sent?
 		$emailNotificationCanBeSent = (
 			config('settings.mail.confirmation') == '1'
 			&& !empty($this->post->email)
-			&& !empty($this->post->archived_at)
+			&& !empty($this->post->email_verified_at)
 		);
-		
-		// Is SMS can be sent in addition?
-		$smsNotificationCanBeSent = (
-			config('settings.sms.enable_phone_as_auth_field') == '1'
-			&& config('settings.sms.confirmation') == '1'
-			&& $this->post->auth_field == 'phone'
-			&& !empty($this->post->phone)
-			&& !empty($this->post->archived_at)
-			&& !isDemoDomain()
-		);
-		
+
 		if ($emailNotificationCanBeSent) {
-			return ['mail'];
+			$via[] = 'mail';
 		}
-		
-		if ($smsNotificationCanBeSent) {
-			if (config('settings.sms.driver') == 'twilio') {
-				return [TwilioChannel::class];
-			}
-			
-			return ['vonage'];
-		}
-		
-		return [];
+
+		return $via;
 	}
-	
+
 	public function toMail($notifiable)
 	{
 		$path = 'account/posts/archived/' . $this->post->id . '/repost';
 		$repostUrl = (config('plugins.domainmapping.installed'))
 			? dmUrl($this->post->country_code, $path)
 			: url($path);
-		
+
 		return (new MailMessage)
 			->subject(trans('mail.post_archived_title', ['title' => $this->post->title]))
 			->greeting(trans('mail.post_archived_content_1'))
@@ -98,17 +83,35 @@ class PostArchived extends Notification implements ShouldQueue
 			->line(trans('mail.post_archived_content_6'))
 			->salutation(trans('mail.footer_salutation', ['appName' => config('app.name')]));
 	}
-	
+
+	public function toExpo($notifiable)
+	{
+		return new ExpoMessage($this->expoMessage($notifiable));
+	}
+
+	protected function expoMessage($notifiable)
+	{
+		$badge = $notifiable->unreadNotifications->count();
+
+		return [
+			'title'	=> $this->post->title,
+			'body' => "Your listing {$this->post->title} has been archived.",
+			'sound' => 'default',
+			'data' => ['post' => $this->post, 'type' => 'post_notification'],
+			'badge' => $badge + 1,
+		];
+	}
+
 	public function toVonage($notifiable)
 	{
 		return (new VonageMessage())->content($this->smsMessage())->unicode();
 	}
-	
+
 	public function toTwilio($notifiable)
 	{
 		return (new TwilioSmsMessage())->content($this->smsMessage());
 	}
-	
+
 	protected function smsMessage()
 	{
 		return trans('sms.post_archived_content', [

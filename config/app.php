@@ -187,10 +187,10 @@ return [
          * Application Service Providers...
          */
 		App\Providers\DropboxServiceProvider::class,
+        App\Providers\ExpoNotificationServiceProvider::class,
 		
         App\Providers\AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
-		// App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\PluginsServiceProvider::class,
@@ -204,6 +204,7 @@ return [
 		Larapen\Feed\FeedServiceProvider::class,
 		Larapen\Impersonate\ImpersonateServiceProvider::class,
 		
+
     ],
     
     /*

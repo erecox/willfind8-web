@@ -23,6 +23,7 @@ use Illuminate\Notifications\Messages\VonageMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Models\Post;
+use ExpoSDK\ExpoMessage;
 use NotificationChannels\Twilio\TwilioChannel;
 use NotificationChannels\Twilio\TwilioSmsMessage;
 
@@ -43,32 +44,20 @@ class PostRepublished extends Notification implements ShouldQueue
 		$emailNotificationCanBeSent = (
 			config('settings.mail.confirmation') == '1'
 			&& !empty($this->post->email)
-			&& empty($this->post->archived_at)
+			&& !empty($this->post->email_verified_at)
 		);
+		if (config('settings.single.listings_review_activation') == '1') {
+			$emailNotificationCanBeSent = ($emailNotificationCanBeSent && !empty($this->post->reviewed_at));
+		}
 		
-		// Is SMS can be sent in addition?
-		$smsNotificationCanBeSent = (
-			config('settings.sms.enable_phone_as_auth_field') == '1'
-			&& config('settings.sms.confirmation') == '1'
-			&& $this->post->auth_field == 'phone'
-			&& !empty($this->post->phone)
-			&& empty($this->post->archived_at)
-			&& !isDemoDomain()
-		);
+		// Get the notification channel
+		$channels = ['expo'];
 		
 		if ($emailNotificationCanBeSent) {
-			return ['mail'];
+			$channels[] = 'mail';
 		}
 		
-		if ($smsNotificationCanBeSent) {
-			if (config('settings.sms.driver') == 'twilio') {
-				return [TwilioChannel::class];
-			}
-			
-			return ['vonage'];
-		}
-		
-		return [];
+		return $channels;
 	}
 	
 	public function toMail($notifiable)
@@ -84,6 +73,24 @@ class PostRepublished extends Notification implements ShouldQueue
 			]))
 			->line(trans('mail.post_republished_content_3', ['appName' => config('app.name')]))
 			->salutation(trans('mail.footer_salutation', ['appName' => config('app.name')]));
+	}
+	
+	public function toExpo($notifiable)
+	{
+		return new ExpoMessage($this->expoMessage($notifiable));
+	}
+
+	protected function expoMessage($notifiable)
+	{
+		$badge = $notifiable->unreadNotifications->count();
+
+		return [
+			'title'	=> $this->post->title,
+			'body' => "Your listing {$this->post->title} is now online.",
+			'sound' => 'default',
+			'data' => ['post' => $this->post,'type' => 'post_notification'],
+			'badge' => $badge + 1,
+		];
 	}
 	
 	public function toVonage($notifiable)

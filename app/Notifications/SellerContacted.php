@@ -61,16 +61,6 @@ class SellerContacted extends Notification implements ShouldQueue
 			&& !isDemoDomain()
 		);
 		
-		/*
-		if ($emailNotificationCanBeSent && $smsNotificationCanBeSent) {
-			if (config('settings.sms.driver') == 'twilio') {
-				return ['mail', TwilioChannel::class];
-			}
-			
-			return ['mail', 'vonage'];
-		}
-		*/
-		
 		if ($emailNotificationCanBeSent) {
 			return ['mail'];
 		}

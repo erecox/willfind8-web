@@ -23,6 +23,7 @@ use Illuminate\Notifications\Messages\VonageMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Models\Post;
+use ExpoSDK\ExpoMessage;
 use NotificationChannels\Twilio\TwilioChannel;
 use NotificationChannels\Twilio\TwilioSmsMessage;
 
@@ -49,33 +50,11 @@ class PostReviewed extends Notification implements ShouldQueue
 			$emailNotificationCanBeSent = ($emailNotificationCanBeSent && !empty($this->post->reviewed_at));
 		}
 		
-		// Is SMS can be sent in addition?
-		$smsNotificationCanBeSent = (
-			config('settings.sms.enable_phone_as_auth_field') == '1'
-			&& config('settings.sms.confirmation') == '1'
-			&& $this->post->auth_field == 'phone'
-			&& !empty($this->post->phone)
-			&& !empty($this->post->phone_verified_at)
-			&& !isDemoDomain()
-		);
-		if (config('settings.single.listings_review_activation') == '1') {
-			$smsNotificationCanBeSent = ($smsNotificationCanBeSent && !empty($this->post->reviewed_at));
-		}
-		
 		// Get the notification channel
-		$channels = [];
+		$channels = ['expo'];
 		
 		if ($emailNotificationCanBeSent) {
 			$channels[] = 'mail';
-		}
-		
-		if ($smsNotificationCanBeSent) {
-			if (config('settings.sms.driver') == 'twilio') {
-				$channels[] = TwilioChannel::class;
-			}
-			if (config('settings.sms.driver') == 'vonage') {
-				$channels[] = 'vonage';
-			}
 		}
 		
 		return $channels;
@@ -96,6 +75,24 @@ class PostReviewed extends Notification implements ShouldQueue
 			->salutation(trans('mail.footer_salutation', ['appName' => config('app.name')]));
 	}
 	
+	public function toExpo($notifiable)
+	{
+		return new ExpoMessage($this->expoMessage($notifiable));
+	}
+
+	protected function expoMessage($notifiable)
+	{
+		$badge = $notifiable->unreadNotifications->count();
+
+		return [
+			'title'	=> $this->post->title,
+			'body' => "Your listing {$this->post->title} is now online.",
+			'sound' => 'default',
+			'data' => ['post' => $this->post, 'type' => 'post_notification'],
+			'badge' => $badge + 1,
+		];
+	}
+
 	public function toVonage($notifiable)
 	{
 		return (new VonageMessage())->content($this->smsMessage())->unicode();

@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CityController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\CountryController;
+use App\Http\Controllers\Api\ExpoNotificationController;
 use App\Http\Controllers\Api\GenderController;
 use App\Http\Controllers\Api\HomeSectionController;
 use App\Http\Controllers\Api\LanguageController;
@@ -420,6 +421,22 @@ Route::prefix('captcha')
 	->controller(CaptchaController::class)
 	->group(function ($router) {
 		Route::get('/', 'getCaptcha')->name('captcha.getCaptcha');
+	});
+
+// expo push notification
+Route::prefix('expo')
+	->controller(ExpoNotificationController::class)
+	->group(function ($router) {
+		Route::middleware(['auth:sanctum'])
+			->group(function ($router) {
+				Route::get('/notifications', 'index');
+				Route::get('/notifications/markAsRead/{ids?}', 'markAsRead');
+				Route::get('/notifications/markAllAsRead', 'markAllAsRead');
+				Route::get('/notifications', 'index');
+				Route::post('/devices', 'storeDeviceToken');
+				Route::get('/devices', 'devices');
+				Route::get('/test', 'testNotification');
+			});
 	});
 
 // fallback

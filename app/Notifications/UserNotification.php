@@ -17,6 +17,7 @@
 namespace App\Notifications;
 
 use App\Helpers\Date;
+use ExpoSDK\ExpoMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -36,7 +37,7 @@ class UserNotification extends Notification implements ShouldQueue
 	
 	public function via($notifiable)
 	{
-		return ['mail'];
+		return ['mail','expo'];
 	}
 	
 	public function toMail($notifiable)
@@ -53,5 +54,23 @@ class UserNotification extends Notification implements ShouldQueue
 				'phone'     => !empty($this->user->phone) ? $this->user->phone : '-',
 			]))
 			->salutation(trans('mail.footer_salutation', ['appName' => config('app.name')]));
+	}
+
+	public function toExpo($notifiable)
+	{
+		return new ExpoMessage($this->expoMessage($notifiable));
+	}
+
+	protected function expoMessage($notifiable)
+	{
+		$badge = $notifiable->unreadNotifications->count();
+
+		return [
+			'title'	=> trans('mail.user_notification_title'),
+			'body' => trans('mail.user_notification_content_2', ['name' => $this->user->name]),
+			'sound' => 'default',
+			'data' => ['user' => $this->user, 'type' => 'user_notification'],
+			'badge' => $badge + 1,
+		];
 	}
 }
