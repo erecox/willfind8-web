@@ -13,6 +13,7 @@ class ExpoDevice extends Model
         'user_id',
         'token',
         'device_name',
+        'platform'
     ];
 
     // Relationship to User

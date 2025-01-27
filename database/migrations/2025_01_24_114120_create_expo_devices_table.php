@@ -13,6 +13,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id'); // Link to the user
             $table->string('token')->unique(); // Expo push token for the device
             $table->string('device_name')->nullable(); // e.g.
+            $table->string('platform')->nullable(); // e.g.
             $table->timestamps();
 
             // Foreign key constraint

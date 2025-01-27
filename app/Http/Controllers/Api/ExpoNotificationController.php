@@ -69,6 +69,7 @@ class ExpoNotificationController extends Controller
         $request->validate([
             'token' => 'required|string',
             'device_name' => 'nullable|string',
+            'platform' => 'nullable|string',
         ]);
 
         $user = auth()->user(); // Get the authenticated user
@@ -79,6 +80,7 @@ class ExpoNotificationController extends Controller
             [
                 'user_id' => $user->id,
                 'device_name' => $request->device_name,
+                'platform' => $request->platform,
             ]
         );
 
