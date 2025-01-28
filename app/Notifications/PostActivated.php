@@ -94,7 +94,7 @@ class PostActivated extends Notification implements ShouldQueue
 
 	protected function expoMessage($notifiable)
 	{
-		$badge = $notifiable->unreadNotifications->count();
+		$badge = $notifiable->user->unreadNotifications->count();
 
 		return [
 			'title'	=> $this->post->title,
