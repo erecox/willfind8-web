@@ -101,7 +101,7 @@ class PostActivated extends Notification implements ShouldQueue
 			'title'	=> $this->post->title,
 			'body' => "'Your listing {$this->post->title} has been activated",
 			'sound' => 'default',
-			'data' => ['post' => $this->post, 'type' => 'post_notification'],
+			'data' => ['post' => $this->post->id, 'type' => 'post_notification'],
 			'badge' => $badge + 1,
 		];
 	}
