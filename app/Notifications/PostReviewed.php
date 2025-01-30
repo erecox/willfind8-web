@@ -83,7 +83,7 @@ class PostReviewed extends Notification implements ShouldQueue
 
 	protected function expoMessage($notifiable)
 	{
-		$user_id = $notifiable->user_id;
+		$user_id = $this->post->user_id;
 		$badge = User::find($user_id)->unreadNotifications->count();
 
 		return [

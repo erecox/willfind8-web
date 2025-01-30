@@ -23,6 +23,7 @@ use Illuminate\Notifications\Messages\VonageMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Models\Post;
+use App\Models\User;
 use ExpoSDK\ExpoMessage;
 use NotificationChannels\Twilio\TwilioChannel;
 use NotificationChannels\Twilio\TwilioSmsMessage;
@@ -82,7 +83,8 @@ class PostRepublished extends Notification implements ShouldQueue
 
 	protected function expoMessage($notifiable)
 	{
-		$badge = $notifiable->unreadNotifications->count();
+		$user_id = $this->post->user_id;
+		$badge = User::find($user_id)->unreadNotifications->count();
 
 		return [
 			'title'	=> $this->post->title,
