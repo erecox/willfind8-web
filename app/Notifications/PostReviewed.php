@@ -83,14 +83,14 @@ class PostReviewed extends Notification implements ShouldQueue
 
 	protected function expoMessage($notifiable)
 	{
-		if(!$notifiable->user) return [];
-		$badge = $notifiable->user->unreadNotifications->count();
+		if(!$notifiable) return [];
+		$badge = $notifiable->unreadNotifications->count();
 
 		return [
 			'title'	=> $this->post->title,
 			'body' => "Your listing {$this->post->title} is now online.",
 			'sound' => 'default',
-			'data' => ['post' => $this->post->id, 'type' => 'post_notification'],
+			'data' => ['post' => $this->post, 'type' => 'post_notification'],
 			'badge' => $badge + 1,
 		];
 	}

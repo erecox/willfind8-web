@@ -55,7 +55,7 @@ class PostObserver
 			}
 		}
 	}
-	
+
 	/**
 	 * Listen to the Entry deleting event.
 	 *
@@ -66,7 +66,7 @@ class PostObserver
 	{
 		// Storage Disk Init.
 		$disk = StorageDisk::getDisk();
-		
+
 		// Delete all the Post's Custom Fields Values
 		$postValues = PostValue::where('post_id', $post->id)->get();
 		if ($postValues->count() > 0) {
@@ -74,7 +74,7 @@ class PostObserver
 				$postValue->delete();
 			}
 		}
-		
+
 		// Delete all Threads
 		$messages = Thread::where('post_id', $post->id);
 		if ($messages->count() > 0) {
@@ -82,7 +82,7 @@ class PostObserver
 				$message->forceDelete();
 			}
 		}
-		
+
 		// Delete all Saved Posts
 		$savedPosts = SavedPost::where('post_id', $post->id);
 		if ($savedPosts->count() > 0) {
@@ -90,7 +90,7 @@ class PostObserver
 				$savedPost->delete();
 			}
 		}
-		
+
 		// Delete all Pictures
 		$pictures = Picture::where('post_id', $post->id);
 		if ($pictures->count() > 0) {
@@ -98,7 +98,7 @@ class PostObserver
 				$picture->delete();
 			}
 		}
-		
+
 		// Delete the Payment(s) of this Post
 		$payments = Payment::withoutGlobalScope(StrictActiveScope::class)->where('post_id', $post->id)->get();
 		if ($payments->count() > 0) {
@@ -106,7 +106,7 @@ class PostObserver
 				$payment->delete();
 			}
 		}
-		
+
 		// Check Reviews plugin
 		if (config('plugins.reviews.installed')) {
 			try {
@@ -120,20 +120,20 @@ class PostObserver
 			} catch (\Throwable $e) {
 			}
 		}
-		
+
 		// Remove the listing media folder
 		if (!empty($post->country_code) && !empty($post->id)) {
 			$directoryPath = 'files/' . strtolower($post->country_code) . '/' . $post->id;
-			
+
 			if ($disk->exists($directoryPath)) {
 				$disk->deleteDirectory($directoryPath);
 			}
 		}
-		
+
 		// Removing Entries from the Cache
 		$this->clearCache($post);
 	}
-	
+
 	/**
 	 * Listen to the Entry saved event.
 	 *
@@ -143,7 +143,7 @@ class PostObserver
 	public function saved(Post $post)
 	{
 		$this->sendNotification($post);
-		
+
 		// Create a new email token if the post's email is marked as unverified
 		if (empty($post->email_verified_at)) {
 			if (empty($post->email_token)) {
@@ -151,7 +151,7 @@ class PostObserver
 				$post->save();
 			}
 		}
-		
+
 		// Create a new phone token if the post's phone number is marked as unverified
 		if (empty($post->phone_verified_at)) {
 			if (empty($post->phone_token)) {
@@ -159,11 +159,11 @@ class PostObserver
 				$post->save();
 			}
 		}
-		
+
 		// Removing Entries from the Cache
 		$this->clearCache($post);
 	}
-	
+
 	/**
 	 * Send Notification,
 	 *
@@ -181,40 +181,40 @@ class PostObserver
 			if ($post->wasRecentlyCreated) {
 				// verified
 				$postWasNotVerified = true;
-				
+
 				// reviewed
 				$postWasNotReviewed = true;
 			} else {
 				$original = $post->getOriginal();
-				
+
 				// verified
 				$postEmailWasNotVerified = ($post->wasChanged('email_verified_at') && empty(data_get($original, 'email_verified_at')));
 				$postPhoneWasNotVerified = ($post->wasChanged('phone_verified_at') && empty(data_get($original, 'phone_verified_at')));
 				$postWasNotVerified = ($postEmailWasNotVerified || $postPhoneWasNotVerified);
-				
+
 				// reviewed
 				$postWasNotReviewed = ($post->wasChanged('reviewed_at') && empty(data_get($original, 'reviewed_at')));
 			}
 			// verified
 			$postIsVerified = (!empty($post->email_verified_at) && !empty($post->phone_verified_at));
 			$postHasJustBeenVerified = ($postIsVerified && $postWasNotVerified);
-			
+
 			// reviewed
 			$postIsReviewed = (!empty($post->reviewed_at));
 			$postHasJustBeenReviewed = ($postIsReviewed && $postWasNotReviewed);
-			
+
 			if ($postIsVerified) {
 				if (config('settings.single.listings_review_activation') == '1') {
 					if ($postHasJustBeenReviewed) {
-						$post->notify(new PostReviewed($post));
+						Notification::send($post->user, new PostReviewed($post));
 					} else {
 						if ($postHasJustBeenVerified) {
-							$post->notify(new PostActivated($post));
+							Notification::send($post->user, new PostActivated($post));
 						}
 					}
 				} else {
 					if ($postHasJustBeenVerified) {
-						$post->notify(new PostReviewed($post));
+						Notification::send($post->user, new PostReviewed($post));
 					}
 				}
 			}
@@ -222,7 +222,7 @@ class PostObserver
 			abort(500, $e->getMessage());
 		}
 	}
-	
+
 	/**
 	 * Listen to the Entry deleted event.
 	 *
@@ -233,7 +233,7 @@ class PostObserver
 	{
 		//...
 	}
-	
+
 	/**
 	 * Removing the Entity's Entries from the Cache
 	 *
@@ -243,15 +243,15 @@ class PostObserver
 	{
 		try {
 			cache()->forget($post->country_code . '.count.posts');
-			
+
 			cache()->forget($post->country_code . '.sitemaps.posts.xml');
-			
+
 			cache()->forget($post->country_code . '.home.getPosts.premium');
 			cache()->forget($post->country_code . '.home.getPosts.latest');
-			
+
 			cache()->forget('post.withoutGlobalScopes.with.lazyLoading.' . $post->id);
 			cache()->forget('post.with.lazyLoading.' . $post->id);
-			
+
 			// Need to be caught (Independently)
 			$languages = Language::withoutGlobalScopes([ActiveScope::class])->get(['abbr']);
 			if ($languages->count() > 0) {
@@ -261,7 +261,7 @@ class PostObserver
 					cache()->forget($post->country_code . '.count.posts.per.cat.' . $language->abbr);
 				}
 			}
-			
+
 			cache()->forget('posts.similar.category.' . $post->category_id . '.post.' . $post->id);
 			cache()->forget('posts.similar.city.' . $post->city_id . '.post.' . $post->id);
 		} catch (\Throwable $e) {
