@@ -92,9 +92,8 @@ class PostArchived extends Notification implements ShouldQueue
 
 	protected function expoMessage($notifiable)
 	{
-		$user_id = $this->post->user_id;
-		$badge = User::find($user_id)->unreadNotifications->count();
-
+		if(!$notifiable->user) return [];
+		$badge = $notifiable->user->unreadNotifications->count();
 
 		return [
 			'title'	=> $this->post->title,
