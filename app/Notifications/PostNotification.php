@@ -84,7 +84,7 @@ class PostNotification extends Notification implements ShouldQueue
 			'title'	=> $this->post->title,
 			'body' => trans('mail.post_notification_content_2', ['advertiserName' => $this->post->contact_name]),
 			'sound' => 'default',
-			'data' => json_encode(['post'=>$this->post->id, 'type' => 'post_notification']),
+			'data' => ['post'=>$this->post->id, 'type' => 'post_notification'],
 			'badge' => $badge + 1,
 		];
 	}
