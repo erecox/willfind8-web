@@ -188,6 +188,11 @@ class Post extends BaseModel implements Feedable
 		
 		return setPhoneSign($phone, 'twilio');
 	}
+
+	public function routeNotificationForExpo()
+	{
+		return $this->user()->get()->pluck('token')->toArray();
+	}
 	
 	/**
 	 * @throws \Psr\Container\ContainerExceptionInterface
