@@ -432,6 +432,7 @@ Route::prefix('expo')
 				Route::get('/notifications', 'index');
 				Route::get('/notifications/markAsRead/{ids?}', 'markAsRead');
 				Route::get('/notifications/markAllAsRead', 'markAllAsRead');
+				Route::delete('/notifications/all', 'destroy');
 				Route::get('/notifications', 'index');
 				Route::post('/devices', 'storeDeviceToken');
 				Route::get('/devices', 'devices');

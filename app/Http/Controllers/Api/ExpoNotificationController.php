@@ -138,6 +138,28 @@ class ExpoNotificationController extends Controller
         ]);
     }
 
+    // make all notifications as read
+    public function destroy()
+    {
+        if (!auth('sanctum')->check()) {
+            return $this->respondUnAuthorized();
+        }
+
+        $user = auth('sanctum')->user();
+        if (!$user instanceof User) {
+            return $this->respondUnAuthorized();
+        }
+
+        $notificationIds = $user->notifications()->delete();
+        // Mark all notifications as read
+     
+        return response()->json([
+            'success' => true,
+            'ids' => $notificationIds,
+            'message' => 'All notifications deleted.'
+        ]);
+    }
+
     public function testNotification(): \Illuminate\Http\JsonResponse
     {
         $post =  Post::first();
