@@ -69,10 +69,10 @@ class SendMessageRequest extends Request
 		$rules = [
 			'name'          => ['required', new BetweenRule(2, 200)],
 			'auth_field'    => ['required', Rule::in($authFields)],
-			'email'         => ['max:100'],
+			'email'         => ['max:200'],
 			'phone'         => ['max:30'],
 			'phone_country' => ['required_with:phone'],
-			'body'          => ['required', new BetweenRule(20, 500)],
+			'body'          => ['required', new BetweenRule(2, 500)],
 			'post_id'       => ['required', 'numeric'],
 		];
 		
